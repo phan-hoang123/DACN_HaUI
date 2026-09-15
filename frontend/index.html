@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="bg-[#0f172a] h-screen flex items-center justify-center font-['Inter']">
+
+    <div class="bg-white p-8 border-t-4 border-blue-600 shadow-2xl w-full max-w-md rounded-none">
+        <div class="text-center mb-8">
+            <div class="bg-blue-600 w-12 h-12 flex items-center justify-center text-white text-2xl mx-auto mb-3">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <h2 class="text-2xl font-black text-slate-800 tracking-wide uppercase">Login</h2>
+            <p class="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Hệ Thống Quản Lý Thông Minh</p>
+        </div>
+
+        <form id="loginForm" class="space-y-5">
+            <div>
+                <label
+                    class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Username</label>
+                <input type="text" id="username" required
+                    class="w-full bg-slate-50 border border-slate-300 p-3 text-sm focus:outline-none focus:border-blue-600 font-mono text-slate-700">
+            </div>
+
+            <div>
+                <label
+                    class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Password</label>
+                <input type="password" id="password" required
+                    class="w-full bg-slate-50 border border-slate-300 p-3 text-sm focus:outline-none focus:border-blue-600 font-mono text-slate-700">
+            </div>
+
+            <p id="errorMsg" class="text-rose-600 text-xs font-bold hidden"><i
+                    class="fa-solid fa-triangle-exclamation mr-1"></i> Sai thông tin xác thực!</p>
+
+            <button type="submit" id="loginBtn"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 text-sm transition-colors uppercase tracking-widest border-b-4 border-blue-800">
+                XÁC THỰC TRUY CẬP
+            </button>
+        </form>
+
+        <p class="text-center text-[10px] text-slate-400 mt-6 font-mono">Đồ án môn học - Đại học Công nghiệp Hà Nội</p>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const btn = document.getElementById('loginBtn');
+            const errorMsg = document.getElementById('errorMsg');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> ĐANG KIỂM TRA...';
+            errorMsg.classList.add('hidden');
+
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('https://localhost:7141/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: u,
+                        password: p
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+
+                    // 1. Cất thông tin user vào bộ nhớ trình duyệt
+                    localStorage.setItem('currentUser', JSON.stringify(result.data));
+
+                    // 2. Thành công thì chuyển sang trang quản lý
+                    window.location.href = 'QuanLy.html';
+                } else {
+                    btn.innerText = 'XÁC THỰC TRUY CẬP';
+                    errorMsg.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error(err);
+                btn.innerText = 'XÁC THỰC TRUY CẬP';
+                errorMsg.innerText = "Lỗi kết nối đến máy chủ Backend!";
+                errorMsg.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+
+</html>

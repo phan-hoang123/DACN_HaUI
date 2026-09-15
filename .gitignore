@@ -1,0 +1,17 @@
+# Bỏ qua môi trường Python
+.venv/
+__pycache__/
+
+# Bỏ qua thư viện Node.js
+node_modules/
+
+# Bỏ qua file build của C# Backend
+backend/bin/
+backend/obj/
+
+# Bỏ qua file nhạy cảm/biến môi trường
+.env
+
+# Bỏ qua cache của Visual Studio
+.vs/
+*.user

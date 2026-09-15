@@ -1,0 +1,127 @@
+[
+  {
+    "ContainingType": "DACN_API.Controllers.IoTController",
+    "Method": "GetAIPrediction",
+    "RelativePath": "ai-predict",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "DACN_API.Controllers.AiDataController",
+    "Method": "GetAiHistory",
+    "RelativePath": "api/ai/history",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "DACN_API.Controllers.AuthController",
+    "Method": "Login",
+    "RelativePath": "api/Auth/login",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "DACN_API.Controllers.LoginRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "DACN_API.Controllers.BarnController",
+    "Method": "GetBarns",
+    "RelativePath": "api/Barn",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "DACN_API.Controllers.BarnController",
+    "Method": "AddBarn",
+    "RelativePath": "api/Barn",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "barn",
+        "Type": "DACN_API.Models.Barn",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "DACN_API.Controllers.BarnController",
+    "Method": "UpdateBarn",
+    "RelativePath": "api/Barn/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "barn",
+        "Type": "DACN_API.Models.Barn",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "DACN_API.Controllers.BarnController",
+    "Method": "DeleteBarn",
+    "RelativePath": "api/Barn/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "DACN_API.Controllers.IoTController",
+    "Method": "ReceiveSensorData",
+    "RelativePath": "api/iot/data",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "payload",
+        "Type": "DACN_API.Controllers.SensorPayload",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "DACN_API.Controllers.IoTController",
+    "Method": "GetLatestSensorData",
+    "RelativePath": "api/sensors/latest",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  }
+]

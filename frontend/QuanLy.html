@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Hệ thống quản lý trang trại thông minh VIGGA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -19,12 +19,12 @@
                     },
                     colors: {
                         material: {
-                            purple: '#4e73df', /* Đổi tone tím sang xanh dương đậm chuẩn Admin chuyên nghiệp */
+                            purple: '#4e73df',
                             purple_light: '#6e8ff0',
                             orange: '#f6c23e',
                             pink: '#e74a3b',
                             teal: '#1cc88a',
-                            dark: '#1a1c24', /* Đen nhám sâu hơn */
+                            dark: '#1a1c24',
                             gray: '#f8f9fc',
                             border: '#e3e6f0'
                         }
@@ -39,16 +39,23 @@
     <link href="style.css" rel="stylesheet">
 </head>
 
-<body class="flex h-screen overflow-hidden bg-material-gray font-sans text-gray-800">
+<body class="flex h-[100dvh] overflow-hidden bg-material-gray font-sans text-gray-800 relative">
 
-    <!-- SIDEBAR CHUYÊN NGHIỆP -->
-    <aside class="w-64 bg-material-dark flex flex-col hidden md:flex z-20 shadow-xl transition-all duration-300">
+    <!-- LỚP PHỦ MỜ KHI MỞ MENU TRÊN ĐIỆN THOẠI -->
+    <div id="sidebar-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden backdrop-blur-xs transition-opacity"></div>
+
+    <!-- SIDEBAR CHUYÊN NGHIỆP (Hỗ trợ cả Desktop cố định & Mobile trượt ngang) -->
+    <aside id="main-sidebar" class="fixed md:static inset-y-0 left-0 w-64 bg-material-dark flex flex-col z-40 shadow-2xl transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
         <!-- Logo Brand -->
-        <div class="h-16 flex items-center justify-center border-b border-gray-800">
+        <div class="h-16 flex items-center justify-between px-5 border-b border-gray-800 shrink-0">
             <div class="flex items-center space-x-3">
                 <i class="fa-solid fa-seedling text-material-teal text-2xl"></i>
                 <h1 class="text-white font-black tracking-widest uppercase text-lg">IoT <span class="font-light">FARM</span></h1>
             </div>
+            <!-- Nút đóng menu trên điện thoại -->
+            <button onclick="toggleMobileSidebar()" class="md:hidden text-gray-400 hover:text-white p-1">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
         </div>
 
         <div class="overflow-y-auto flex-1 py-4 scrollbar-hide">
@@ -58,9 +65,9 @@
             </div>
             <nav class="space-y-1 mb-4">
                 <a href="#" onclick="switchTab('tong-quan')" id="menu-tong-quan" class="group flex items-center px-5 py-3 text-sm text-gray-400 font-medium hover:text-white hover:bg-slate-800 border-l-4 border-transparent hover:border-gray-500 transition-all active-menu">
-    <i class="fa-solid fa-chart-line w-6 text-center mr-2 group-hover:text-material-purple transition-colors"></i>
-    <span>Bảng điều khiển</span>
-</a>
+                    <i class="fa-solid fa-chart-line w-6 text-center mr-2 group-hover:text-material-purple transition-colors"></i>
+                    <span>Bảng điều khiển</span>
+                </a>
             </nav>
 
             <!-- NHÓM 2: VẬN HÀNH (LIVE) -->
@@ -105,13 +112,20 @@
         </div>
     </aside>
 
-    <div class="flex-1 flex flex-col h-screen overflow-hidden">
+    <div class="flex-1 flex flex-col h-[100dvh] overflow-hidden w-full">
         
         <!-- HEADER TRẮNG SẠCH SẼ (CHUẨN UX) -->
-        <header class="bg-white text-gray-700 h-16 flex items-center justify-between px-6 shadow-sm z-10 shrink-0">
-            <div class="flex items-center space-x-4">
-                <i class="fa-solid fa-bars text-xl cursor-pointer text-gray-400 hover:text-gray-600"></i>
-                <!-- Breadcrumbs (Thanh điều hướng) -->
+        <header class="bg-white text-gray-700 h-14 sm:h-16 flex items-center justify-between px-3 sm:px-6 shadow-sm z-10 shrink-0">
+            <div class="flex items-center space-x-3 sm:space-x-4 min-w-0">
+                <button onclick="toggleMobileSidebar()" class="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 focus:outline-none">
+                    <i class="fa-solid fa-bars text-lg sm:text-xl"></i>
+                </button>
+                <!-- Tiêu đề rút gọn cho điện thoại -->
+                <div class="flex items-center space-x-2 md:hidden truncate">
+                    <i class="fa-solid fa-seedling text-material-teal text-base"></i>
+                    <span id="mobile-header-title" class="font-black text-sm text-gray-800 truncate">Bảng điều khiển</span>
+                </div>
+                <!-- Breadcrumbs (Thanh điều hướng Desktop) -->
                 <nav class="hidden md:flex text-sm font-medium text-gray-500" aria-label="Breadcrumb">
                     <ol class="inline-flex items-center space-x-1 md:space-x-2">
                         <li class="inline-flex items-center">
@@ -127,22 +141,22 @@
                 </nav>
             </div>
             
-            <div class="flex items-center space-x-5">
+            <div class="flex items-center space-x-3 sm:space-x-5 shrink-0">
                 <!-- Đồng hồ live -->
-                <div class="text-xs font-bold text-gray-500 font-mono bg-gray-100 px-3 py-1.5 rounded-full hidden md:block border border-gray-200">
+                <div class="text-[11px] font-bold text-gray-500 font-mono bg-gray-100 px-3 py-1.5 rounded-full hidden sm:block border border-gray-200">
                     <i class="fa-regular fa-clock mr-1 text-material-teal"></i> <span id="live-clock">--:--:--</span>
                 </div>
                 
                 <!-- Nút thông báo -->
-                <div class="relative cursor-pointer group">
-                    <i class="fa-solid fa-bell text-gray-400 text-lg group-hover:text-material-purple transition-colors"></i>
-                    <span class="absolute -top-1 -right-1 bg-material-pink text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-white">3+</span>
+                <div onclick="switchTab('nhat-ky')" class="relative cursor-pointer group p-1">
+                    <i class="fa-solid fa-bell text-gray-400 text-base sm:text-lg group-hover:text-material-purple transition-colors"></i>
+                    <span class="absolute -top-0.5 -right-0.5 bg-material-pink text-white text-[8px] sm:text-[9px] font-bold px-1.5 py-0.2 rounded-full border border-white">3+</span>
                 </div>
 
-                <div class="h-8 border-l border-gray-300 mx-2"></div>
+                <div class="h-6 sm:h-8 border-l border-gray-300 mx-1 sm:mx-2"></div>
 
-                <!-- User Profile Dropdown Tự tạo -->
-                <div onclick="moModalProfile()" class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 py-1 px-2 rounded-lg transition-colors">
+                <!-- User Profile Dropdown -->
+                <div onclick="moModalProfile()" class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 py-1 px-1.5 sm:px-2 rounded-lg transition-colors">
                     <div class="text-right hidden md:block">
                         <h4 id="user-fullname" class="text-xs font-bold text-gray-700">Đang tải...</h4>
                         <p id="user-role" class="text-[10px] text-gray-400 font-medium">Quản trị viên</p>
@@ -152,98 +166,98 @@
             </div>
         </header>
 
-        <!-- MAIN CONTENT (VÙNG LÀM VIỆC CHÍNH) -->
-        <main class="flex-1 overflow-y-auto bg-material-gray p-6 md:p-8 space-y-6">
+        <!-- MAIN CONTENT (VÙNG LÀM VIỆC CHÍNH - Có pb-20 trên mobile để không bị thanh điều hướng đáy che) -->
+        <main class="flex-1 overflow-y-auto bg-material-gray p-3 sm:p-6 md:p-8 pb-20 md:pb-8 space-y-4 sm:space-y-6">
             <!-- 1. TAB TỔNG QUAN (DASHBOARD) -->
-            <div id="tab-tong-quan" class="tab-content space-y-6 block w-full">
+            <div id="tab-tong-quan" class="tab-content space-y-4 sm:space-y-6 block w-full">
                 
                 <!-- Tiêu đề trang -->
-                <div class="flex justify-between items-end mb-4">
+                <div class="flex flex-wrap justify-between items-center gap-2 mb-2 sm:mb-4">
                     <div>
-                        <h2 class="text-2xl font-black text-gray-800 tracking-tight">Tổng Quan Trại <span class="text-material-purple">Khu A</span></h2>
-                        <p class="text-sm text-gray-500 mt-1">Báo cáo thời gian thực từ hệ thống cảm biến & AI</p>
+                        <h2 class="text-lg sm:text-2xl font-black text-gray-800 tracking-tight">Tổng Quan Trại <span class="text-material-purple">Khu A</span></h2>
+                        <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Báo cáo thời gian thực từ hệ thống cảm biến & AI</p>
                     </div>
-                    <button class="bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-bold px-4 py-2 rounded shadow-sm transition-all flex items-center">
-                        <i class="fa-solid fa-download mr-2 text-material-purple"></i> Xuất PDF
+                    <button onclick="window.print()" class="bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs sm:text-sm font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded shadow-sm transition-all flex items-center">
+                        <i class="fa-solid fa-download mr-1.5 text-material-purple"></i> Xuất PDF
                     </button>
                 </div>
 
-                <!-- 4 KPI Cards Chuyên nghiệp -->
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                <!-- 4 KPI Cards Chuyên nghiệp (Hiển thị 2 cột gọn gàng trên điện thoại, 4 cột trên PC) -->
+                <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-6">
                     <!-- Card Tổng đàn -->
-                    <div class="bg-white rounded shadow-card border-l-4 border-material-purple p-5 flex flex-col justify-between h-32 hover:-translate-y-1 transition-transform">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-xs font-bold text-material-purple uppercase tracking-wider mb-1">Tổng đàn vật nuôi</p>
-                                <h2 class="text-2xl font-black text-gray-800" id="kpi-tong-dan">--</h2>
+                    <div class="bg-white rounded shadow-card border-l-4 border-material-purple p-3 sm:p-5 flex flex-col justify-between min-h-[104px] sm:h-32">
+                        <div class="flex justify-between items-start gap-1">
+                            <div class="min-w-0">
+                                <p class="text-[10px] sm:text-xs font-bold text-material-purple uppercase tracking-wider mb-1 truncate">Tổng đàn</p>
+                                <h2 class="text-lg sm:text-2xl font-black text-gray-800 truncate" id="kpi-tong-dan">--</h2>
                             </div>
-                            <i class="fa-solid fa-paw text-gray-300 text-3xl"></i>
+                            <i class="fa-solid fa-paw text-gray-200 text-xl sm:text-3xl shrink-0"></i>
                         </div>
-                        <p id="kpi-tong-dan-status" class="text-[10px] text-gray-500 font-medium mt-2"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Đang phân tích luồng AI...</p>
+                        <p id="kpi-tong-dan-status" class="text-[9px] sm:text-[10px] text-gray-500 font-medium mt-2 truncate"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Đang phân tích...</p>
                     </div>
 
                     <!-- Card Nhiệt độ -->
-                    <div class="bg-white rounded shadow-card border-l-4 border-material-orange p-5 flex flex-col justify-between h-32 hover:-translate-y-1 transition-transform">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-xs font-bold text-material-orange uppercase tracking-wider mb-1">Nhiệt độ trung bình</p>
-                                <h2 class="text-2xl font-black text-gray-800" id="kpi-temp">--<span class="text-base text-gray-500 font-medium ml-1">°C</span></h2>
+                    <div class="bg-white rounded shadow-card border-l-4 border-material-orange p-3 sm:p-5 flex flex-col justify-between min-h-[104px] sm:h-32">
+                        <div class="flex justify-between items-start gap-1">
+                            <div class="min-w-0">
+                                <p class="text-[10px] sm:text-xs font-bold text-material-orange uppercase tracking-wider mb-1 truncate">Nhiệt độ TB</p>
+                                <h2 class="text-lg sm:text-2xl font-black text-gray-800 truncate" id="kpi-temp">--<span class="text-xs sm:text-base text-gray-500 font-medium ml-0.5">°C</span></h2>
                             </div>
-                            <i class="fa-solid fa-temperature-half text-gray-300 text-3xl"></i>
+                            <i class="fa-solid fa-temperature-half text-gray-200 text-xl sm:text-3xl shrink-0"></i>
                         </div>
-                        <p id="kpi-temp-status" class="text-[10px] text-gray-500 font-medium mt-2"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Chờ dữ liệu từ Gateway</p>
+                        <p id="kpi-temp-status" class="text-[9px] sm:text-[10px] text-gray-500 font-medium mt-2 truncate"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Chờ Gateway</p>
                     </div>
 
                     <!-- Card Độ ẩm -->
-                    <div class="bg-white rounded shadow-card border-l-4 border-material-teal p-5 flex flex-col justify-between h-32 hover:-translate-y-1 transition-transform">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-xs font-bold text-material-teal uppercase tracking-wider mb-1">Độ ẩm trung bình</p>
-                                <h2 class="text-2xl font-black text-gray-800" id="kpi-do-am">--<span class="text-base text-gray-500 font-medium ml-1">%</span></h2>
+                    <div class="bg-white rounded shadow-card border-l-4 border-material-teal p-3 sm:p-5 flex flex-col justify-between min-h-[104px] sm:h-32">
+                        <div class="flex justify-between items-start gap-1">
+                            <div class="min-w-0">
+                                <p class="text-[10px] sm:text-xs font-bold text-material-teal uppercase tracking-wider mb-1 truncate">Độ ẩm TB</p>
+                                <h2 class="text-lg sm:text-2xl font-black text-gray-800 truncate" id="kpi-do-am">--<span class="text-xs sm:text-base text-gray-500 font-medium ml-0.5">%</span></h2>
                             </div>
-                            <i class="fa-solid fa-droplet text-gray-300 text-3xl"></i>
+                            <i class="fa-solid fa-droplet text-gray-200 text-xl sm:text-3xl shrink-0"></i>
                         </div>
-                        <p id="kpi-humid-status" class="text-[10px] text-gray-500 font-medium mt-2"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Chờ dữ liệu từ Gateway</p>
+                        <p id="kpi-humid-status" class="text-[9px] sm:text-[10px] text-gray-500 font-medium mt-2 truncate"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Chờ Gateway</p>
                     </div>
 
                     <!-- Card AI Dự báo -->
-                    <div class="bg-white rounded shadow-card border-l-4 border-material-pink p-5 flex flex-col justify-between h-32 hover:-translate-y-1 transition-transform">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-xs font-bold text-material-pink uppercase tracking-wider mb-1">Dự báo AI (2 giờ tới)</p>
-                                <h2 class="text-2xl font-black text-gray-800" id="ai-predict-temp">--°C</h2>
+                    <div class="bg-white rounded shadow-card border-l-4 border-material-pink p-3 sm:p-5 flex flex-col justify-between min-h-[104px] sm:h-32">
+                        <div class="flex justify-between items-start gap-1">
+                            <div class="min-w-0">
+                                <p class="text-[10px] sm:text-xs font-bold text-material-pink uppercase tracking-wider mb-1 truncate">Dự báo 2h tới</p>
+                                <h2 class="text-lg sm:text-2xl font-black text-gray-800 truncate" id="ai-predict-temp">--°C</h2>
                             </div>
-                            <i class="fa-solid fa-brain text-gray-300 text-3xl"></i>
+                            <i class="fa-solid fa-brain text-gray-200 text-xl sm:text-3xl shrink-0"></i>
                         </div>
-                        <p id="ai-action-text" class="text-[10px] text-gray-500 font-medium mt-2 truncate"><i class="fa-solid fa-chart-line mr-1 text-material-pink"></i> Đang chờ nạp Model...</p>
+                        <p id="ai-action-text" class="text-[9px] sm:text-[10px] text-gray-500 font-medium mt-2 truncate"><i class="fa-solid fa-chart-line mr-1 text-material-pink"></i> Đang nạp AI...</p>
                     </div>
                 </div>
 
                 <!-- HÀNG 2: Biểu đồ & Vận Hành Nhanh -->
-                <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
                     <!-- Biểu đồ -->
                     <div class="xl:col-span-2 bg-white rounded shadow-card overflow-hidden border border-gray-100 flex flex-col">
-                        <div class="bg-gray-50 px-5 py-4 border-b border-gray-200 flex justify-between items-center">
-                            <h6 class="font-bold text-sm text-material-purple uppercase tracking-wide">Biến Thiên Môi Trường</h6>
-                            <span class="text-[10px] font-bold text-material-teal bg-green-100 px-2 py-1 rounded border border-green-200"><i class="fa-solid fa-circle text-[8px] animate-pulse mr-1"></i>LIVE</span>
+                        <div class="bg-gray-50 px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-200 flex justify-between items-center">
+                            <h6 class="font-bold text-xs sm:text-sm text-material-purple uppercase tracking-wide">Biến Thiên Môi Trường</h6>
+                            <span class="text-[10px] font-bold text-material-teal bg-green-100 px-2 py-0.5 rounded border border-green-200"><i class="fa-solid fa-circle text-[8px] animate-pulse mr-1"></i>LIVE</span>
                         </div>
-                        <div class="p-5 h-80 w-full flex-1"><canvas id="mainDashboardChart"></canvas></div>
+                        <div class="p-3 sm:p-5 h-60 sm:h-80 w-full flex-1"><canvas id="mainDashboardChart"></canvas></div>
                     </div>
 
-                    <!-- Khối Vận Hành Nhanh (Khóa chiều cao cố định bằng với biểu đồ) -->
-                    <div class="bg-white rounded shadow-card overflow-hidden border border-gray-100 flex flex-col h-[380px]">
+                    <!-- Khối Vận Hành Nhanh -->
+                    <div class="bg-white rounded shadow-card overflow-hidden border border-gray-100 flex flex-col h-[340px] sm:h-[380px]">
                         <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 space-y-2 shrink-0">
                             <div class="flex justify-between items-center">
-                                <h6 class="font-bold text-sm text-gray-700 uppercase tracking-wide">
+                                <h6 class="font-bold text-xs sm:text-sm text-gray-700 uppercase tracking-wide">
                                     <i class="fa-solid fa-bolt mr-1.5 text-material-orange"></i>Vận Hành Nhanh
                                 </h6>
                                 <span class="text-[10px] font-bold text-gray-600 bg-gray-200 px-2 py-1 rounded">-- CHUỒNG</span>
                             </div>
                             <!-- Ô tìm kiếm chuồng nhỏ gọn -->
                             <div class="relative">
-                                <i class="fa-solid fa-search absolute left-2.5 top-2 text-gray-400 text-xs"></i>
+                                <i class="fa-solid fa-search absolute left-2.5 top-2.5 text-gray-400 text-xs"></i>
                                 <input type="text" id="search-van-hanh" onkeyup="locVanHanhNhanh()" placeholder="Tìm nhanh chuồng..."
-                                    class="w-full pl-8 pr-3 py-1 bg-white border border-gray-200 rounded text-xs focus:outline-none focus:border-material-purple">
+                                    class="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-200 rounded text-xs focus:outline-none focus:border-material-purple">
                             </div>
                         </div>
                         <div class="overflow-y-auto p-3 flex-1 space-y-3 bg-gray-50/50" id="danh-sach-van-hanh-nhanh">
@@ -253,50 +267,50 @@
                 </div> <!-- KẾT THÚC HÀNG 2 -->
 
                 <!-- HÀNG 3: CẢNH BÁO NHANH & CHỈ SỐ MÔI TRƯỜNG -->
-                <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
                     
                     <!-- Bảng Cảnh báo & Sự kiện -->
                     <div class="xl:col-span-2 bg-white rounded shadow-card overflow-hidden border border-gray-100">
-                        <div class="bg-gray-50 px-5 py-3 border-b border-gray-200 flex justify-between items-center">
-                            <h6 class="font-bold text-sm text-material-pink uppercase tracking-wide"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Cảnh Báo Hệ Thống</h6>
+                        <div class="bg-gray-50 px-4 sm:px-5 py-3 border-b border-gray-200 flex justify-between items-center">
+                            <h6 class="font-bold text-xs sm:text-sm text-material-pink uppercase tracking-wide"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Cảnh Báo Hệ Thống</h6>
                             <a href="#" onclick="switchTab('nhat-ky')" class="text-[10px] font-bold text-material-purple hover:underline uppercase tracking-wider">Xem tất cả <i class="fa-solid fa-angle-right ml-1"></i></a>
                         </div>
                         <div class="p-0">
                             <ul class="divide-y divide-gray-100" id="alert-list">
-                                <li class="p-4 hover:bg-gray-50 transition-colors flex items-start space-x-4">
-                                    <div class="bg-material-pink/10 p-2 rounded-full mt-1">
+                                <li class="p-3.5 sm:p-4 hover:bg-gray-50 transition-colors flex items-start space-x-3 sm:space-x-4">
+                                    <div class="bg-material-pink/10 p-2 rounded-full mt-0.5 shrink-0">
                                         <i class="fa-solid fa-fire text-material-pink text-sm w-4 text-center"></i>
                                     </div>
-                                    <div class="flex-1">
-                                        <div class="flex justify-between items-center mb-1">
-                                            <h4 class="text-xs font-bold text-gray-800">Cảnh báo Nhiệt độ - CHUONG-04</h4>
-                                            <span class="text-[10px] text-gray-400 font-mono">10 phút trước</span>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex justify-between items-center mb-1 gap-2">
+                                            <h4 class="text-xs font-bold text-gray-800 truncate">Cảnh báo Nhiệt độ - CHUONG-04</h4>
+                                            <span class="text-[10px] text-gray-400 font-mono shrink-0">10 phút trước</span>
                                         </div>
-                                        <p class="text-[11px] text-gray-500 line-clamp-1">Nhiệt độ đo được (31.2°C) vượt ngưỡng cài đặt (30°C). Hệ thống đã tự động kích hoạt 2 quạt hút.</p>
+                                        <p class="text-[11px] text-gray-500 line-clamp-2 sm:line-clamp-1">Nhiệt độ đo được (31.2°C) vượt ngưỡng cài đặt (30°C). Hệ thống đã tự động kích hoạt 2 quạt hút.</p>
                                     </div>
                                 </li>
-                                <li class="p-4 hover:bg-gray-50 transition-colors flex items-start space-x-4">
-                                    <div class="bg-material-purple/10 p-2 rounded-full mt-1">
+                                <li class="p-3.5 sm:p-4 hover:bg-gray-50 transition-colors flex items-start space-x-3 sm:space-x-4">
+                                    <div class="bg-material-purple/10 p-2 rounded-full mt-0.5 shrink-0">
                                         <i class="fa-solid fa-eye text-material-purple text-sm w-4 text-center"></i>
                                     </div>
-                                    <div class="flex-1">
-                                        <div class="flex justify-between items-center mb-1">
-                                            <h4 class="text-xs font-bold text-gray-800">AI Vision: Phát hiện bất thường</h4>
-                                            <span class="text-[10px] text-gray-400 font-mono">25 phút trước</span>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex justify-between items-center mb-1 gap-2">
+                                            <h4 class="text-xs font-bold text-gray-800 truncate">AI Vision: Phát hiện bất thường</h4>
+                                            <span class="text-[10px] text-gray-400 font-mono shrink-0">25 phút trước</span>
                                         </div>
-                                        <p class="text-[11px] text-gray-500 line-clamp-1">YOLOv8 phát hiện mật độ đàn tụm lại bất thường tại góc trái CHUONG-03. Có khả năng heo bị lạnh.</p>
+                                        <p class="text-[11px] text-gray-500 line-clamp-2 sm:line-clamp-1">YOLOv8 phát hiện mật độ đàn tụm lại bất thường tại góc trái CHUONG-03. Có khả năng heo bị lạnh.</p>
                                     </div>
                                 </li>
-                                <li class="p-4 hover:bg-gray-50 transition-colors flex items-start space-x-4">
-                                    <div class="bg-material-teal/10 p-2 rounded-full mt-1">
+                                <li class="p-3.5 sm:p-4 hover:bg-gray-50 transition-colors flex items-start space-x-3 sm:space-x-4">
+                                    <div class="bg-material-teal/10 p-2 rounded-full mt-0.5 shrink-0">
                                         <i class="fa-solid fa-check text-material-teal text-sm w-4 text-center"></i>
                                     </div>
-                                    <div class="flex-1">
-                                        <div class="flex justify-between items-center mb-1">
-                                            <h4 class="text-xs font-bold text-gray-800">Hoàn tất chu trình đồng bộ</h4>
-                                            <span class="text-[10px] text-gray-400 font-mono">1 giờ trước</span>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex justify-between items-center mb-1 gap-2">
+                                            <h4 class="text-xs font-bold text-gray-800 truncate">Hoàn tất chu trình đồng bộ</h4>
+                                            <span class="text-[10px] text-gray-400 font-mono shrink-0">1 giờ trước</span>
                                         </div>
-                                        <p class="text-[11px] text-gray-500 line-clamp-1">Gateway đã sao lưu thành công 12,040 bản ghi dữ liệu cảm biến lên Server Trung tâm.</p>
+                                        <p class="text-[11px] text-gray-500 line-clamp-2 sm:line-clamp-1">Gateway đã sao lưu thành công 12,040 bản ghi dữ liệu cảm biến lên Server Trung tâm.</p>
                                     </div>
                                 </li>
                             </ul>
@@ -305,20 +319,20 @@
 
                     <!-- Khối Chỉ số Môi trường -->
                     <div class="bg-white rounded shadow-card overflow-hidden border border-gray-100 flex flex-col">
-                        <div class="bg-gray-50 px-5 py-3 border-b border-gray-200">
-                            <h6 class="font-bold text-sm text-gray-700 uppercase tracking-wide"><i class="fa-solid fa-leaf mr-2 text-material-teal"></i>Đánh Giá Môi Trường</h6>
+                        <div class="bg-gray-50 px-4 sm:px-5 py-3 border-b border-gray-200">
+                            <h6 class="font-bold text-xs sm:text-sm text-gray-700 uppercase tracking-wide"><i class="fa-solid fa-leaf mr-2 text-material-teal"></i>Đánh Giá Môi Trường</h6>
                         </div>
-                        <div class="p-5 flex-1 flex flex-col justify-between">
+                        <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between">
                             
                             <!-- Chỉ số Khí Độc (NH3) -->
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+                            <div class="bg-gray-50 p-3.5 sm:p-4 rounded-lg border border-gray-200 mb-3 sm:mb-4">
                                 <div class="flex justify-between items-center mb-2">
                                     <h4 class="text-xs font-bold text-gray-600 uppercase">Mức độ Khí NH3</h4>
                                     <span id="nh3-badge" class="text-[10px] font-bold bg-material-orange/10 text-material-orange px-2 py-0.5 rounded border border-material-orange/20">CẢNH BÁO NHẸ</span>
                                 </div>
                                 <div class="flex items-end space-x-2">
-                                    <span id="live-nh3" class="text-3xl font-black text-gray-800">14.2</span>
-                                    <span class="text-sm font-bold text-gray-400 mb-1">ppm</span>
+                                    <span id="live-nh3" class="text-2xl sm:text-3xl font-black text-gray-800">14.2</span>
+                                    <span class="text-xs sm:text-sm font-bold text-gray-400 mb-1">ppm</span>
                                 </div>
                                 <div class="w-full bg-gray-200 rounded-full h-1.5 mt-3 overflow-hidden flex">
                                     <div class="bg-material-teal h-1.5 rounded-l-full" style="width: 30%"></div>
@@ -326,14 +340,14 @@
                                     <div class="bg-gray-300 h-1.5 rounded-r-full" style="width: 20%"></div>
                                 </div>
                                 <div class="flex justify-between mt-1 text-[9px] text-gray-400 font-bold">
-                                    <span>An toàn (< 10)</span>
-                                    <span>Nguy hiểm (> 20)</span>
+                                    <span>An toàn (&lt; 10)</span>
+                                    <span>Nguy hiểm (&gt; 20)</span>
                                 </div>
                             </div>
 
                             <!-- Trạng thái Hệ thống Thông gió -->
-                            <div class="flex items-center p-4 rounded-lg border border-material-purple/20 bg-material-purple/5">
-                                <div class="w-10 h-10 rounded-full bg-white border border-material-purple/20 flex items-center justify-center mr-3 shadow-sm">
+                            <div class="flex items-center p-3.5 sm:p-4 rounded-lg border border-material-purple/20 bg-material-purple/5">
+                                <div class="w-10 h-10 rounded-full bg-white border border-material-purple/20 flex items-center justify-center mr-3 shadow-sm shrink-0">
                                     <i class="fa-solid fa-fan text-material-purple animate-spin" style="animation-duration: 3s;"></i>
                                 </div>
                                 <div>
@@ -349,130 +363,78 @@
             </div>
 
             <!-- 2. TAB CẢM BIẾN (TELEMETRY) -->
-            <div id="tab-cam-bien" class="tab-content space-y-6 hidden w-full">
-                <div class="flex justify-between items-end mb-4">
+            <div id="tab-cam-bien" class="tab-content space-y-4 sm:space-y-6 hidden w-full">
+                <div class="flex justify-between items-end mb-2 sm:mb-4">
                     <div>
-                        <h2 class="text-2xl font-black text-gray-800 tracking-tight">Telemetry: Giám sát Môi trường</h2>
-                        <p class="text-sm text-gray-500 mt-1">Dữ liệu thô thu thập từ mạng lưới ESP32/Gateway</p>
+                        <h2 class="text-lg sm:text-2xl font-black text-gray-800 tracking-tight">Telemetry: Giám sát Môi trường</h2>
+                        <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Dữ liệu thô thu thập từ mạng lưới ESP32/Gateway</p>
                     </div>
                 </div>
-                <div id="luoi-the-cam-bien" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
+                <div id="luoi-the-cam-bien" class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6"></div>
             </div>
 
             <!-- 3. TAB AI CAMERA (CCTV) -->
-            <div id="tab-ai-camera" class="tab-content space-y-6 hidden w-full">
-                <div class="flex justify-between items-end mb-4">
+            <div id="tab-ai-camera" class="tab-content space-y-4 sm:space-y-6 hidden w-full">
+                <div class="flex flex-wrap justify-between items-center gap-2 mb-2 sm:mb-4">
                     <div>
-                        <h2 class="text-2xl font-black text-gray-800 tracking-tight">Trung Tâm Điều Hành AI CCTV</h2>
-                        <p class="text-sm text-gray-500 mt-1" id="ai-system-status">Trạng thái: Khởi động module Computer Vision...</p>
+                        <h2 class="text-lg sm:text-2xl font-black text-gray-800 tracking-tight">Trung Tâm Điều Hành AI CCTV</h2>
+                        <p class="text-xs sm:text-sm text-gray-500 mt-0.5" id="ai-system-status">Trạng thái: Khởi động module Computer Vision...</p>
                     </div>
                     <div id="ai-running-badge" class="hidden">
-                        <span class="px-3 py-1 bg-green-100 border border-green-300 text-green-700 font-bold rounded shadow-sm text-xs flex items-center">
-                            <i class="fa-solid fa-shield-check mr-2"></i> YOLOv8 ONLINE
+                        <span class="px-2.5 py-1 bg-green-100 border border-green-300 text-green-700 font-bold rounded shadow-sm text-[11px] flex items-center">
+                            <i class="fa-solid fa-shield-check mr-1.5"></i> YOLOv8 ONLINE
                         </span>
                     </div>
                 </div>
 
-                <div class="bg-white p-5 rounded shadow-card border border-gray-100 mb-6">
-                    <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
-                        <h3 class="text-sm font-bold text-material-purple uppercase">Biến Động Tổng Đàn (7 Ngày)</h3>
+                <div class="bg-white p-3.5 sm:p-5 rounded shadow-card border border-gray-100 mb-4 sm:mb-6">
+                    <div class="flex justify-between items-center mb-3 sm:mb-4 pb-2 border-b border-gray-100">
+                        <h3 class="text-xs sm:text-sm font-bold text-material-purple uppercase">Biến Động Tổng Đàn (7 Ngày)</h3>
                     </div>
-                    <div class="h-64"><canvas id="aiHistoryChart"></canvas></div>
+                    <div class="h-52 sm:h-64"><canvas id="aiHistoryChart"></canvas></div>
                 </div>
 
-                <!-- Khu vực Camera (Giữ nguyên cấu trúc đã build cho ông lúc nãy) -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="multi-cam-grid">
-                    <!-- CAMERA 01 -->
-                    <div class="bg-white rounded shadow-card overflow-hidden flex flex-col border border-gray-200">
-                        <div class="p-3 bg-material-dark text-white flex justify-between items-center">
-                            <h4 class="text-sm font-bold"><i class="fa-solid fa-video text-material-pink mr-2"></i>CAM 01: Chuồng Heo Thịt</h4>
-                            <span class="flex items-center text-[10px] font-bold text-material-teal uppercase tracking-widest"><span class="w-2 h-2 bg-material-teal rounded-full mr-2 animate-pulse"></span>Live</span>
-                        </div>
-                        <div class="relative bg-black aspect-video flex items-center justify-center overflow-hidden">
-                            <img id="video-stream-1" src="https://via.placeholder.com/640x360/1a1a1a/444444?text=Chờ+kết+nối+YOLOv8..." alt="Camera 1" class="w-full h-full object-cover">
-                            <div class="absolute top-2 left-2 bg-black/70 text-white text-[10px] p-2 rounded border border-gray-700 font-mono shadow-lg backdrop-blur-sm">
-                                <p class="text-material-teal font-bold mb-1">YOLOv8 DETECTED</p>
-                                <p>FPS: <span id="cam1-fps">24.5</span></p>
-                                <p>Total: <span id="cam1-count" class="text-material-orange">12</span> cá thể</p>
-                                <p>Status: <span id="cam1-status" class="text-material-teal">Bình thường</span></p>
-                            </div>
-                            <div class="absolute inset-0 border border-white/10 pointer-events-none">
-                                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 border border-material-pink/50 rounded-full"></div>
-                                <div class="absolute top-1/2 left-0 w-full h-[1px] bg-white/10"></div>
-                                <div class="absolute top-0 left-1/2 w-[1px] h-full bg-white/10"></div>
-                            </div>
-                        </div>
-                        <div class="p-2 bg-gray-50 flex justify-between text-[10px] text-gray-500 font-mono">
-                            <span>IP: 192.168.1.101</span>
-                            <span>Latency: 45ms</span>
-                        </div>
-                    </div>
-
-                    <!-- CAMERA 02 -->
-                    <div class="bg-white rounded shadow-card overflow-hidden flex flex-col border border-gray-200">
-                        <div class="p-3 bg-material-dark text-white flex justify-between items-center">
-                            <h4 class="text-sm font-bold"><i class="fa-solid fa-video text-material-pink mr-2"></i>CAM 02: Chuồng Gà Đẻ</h4>
-                            <span class="flex items-center text-[10px] font-bold text-material-teal uppercase tracking-widest"><span class="w-2 h-2 bg-material-teal rounded-full mr-2 animate-pulse"></span>Live</span>
-                        </div>
-                        <div class="relative bg-black aspect-video flex items-center justify-center overflow-hidden">
-                            <img id="video-stream-2" src="https://via.placeholder.com/640x360/1a1a1a/444444?text=Chờ+kết+nối+YOLOv8..." alt="Camera 2" class="w-full h-full object-cover">
-                            <div class="absolute top-2 left-2 bg-black/70 text-white text-[10px] p-2 rounded border border-gray-700 font-mono shadow-lg backdrop-blur-sm">
-                                <p class="text-material-teal font-bold mb-1">YOLOv8 DETECTED</p>
-                                <p>FPS: <span id="cam2-fps">22.1</span></p>
-                                <p>Total: <span id="cam2-count" class="text-material-orange">45</span> cá thể</p>
-                                <p>Status: <span id="cam2-status" class="text-material-pink animate-pulse">Mật độ cao</span></p>
-                            </div>
-                            <div class="absolute inset-0 border border-white/10 pointer-events-none">
-                                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 border border-material-pink/50 rounded-full"></div>
-                                <div class="absolute top-1/2 left-0 w-full h-[1px] bg-white/10"></div>
-                                <div class="absolute top-0 left-1/2 w-[1px] h-full bg-white/10"></div>
-                            </div>
-                        </div>
-                        <div class="p-2 bg-gray-50 flex justify-between text-[10px] text-gray-500 font-mono">
-                            <span>IP: 192.168.1.102</span>
-                            <span>Latency: 52ms</span>
-                        </div>
-                    </div>
-                </div>
+                <!-- Khu vực Camera -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6" id="multi-cam-grid"></div>
             </div>
 
             <!-- 4. TAB QUẢN LÝ CHUỒNG TRẠI (CRUD) -->
-            <div id="tab-chuong-trai" class="tab-content space-y-6 hidden w-full">
+            <div id="tab-chuong-trai" class="tab-content space-y-4 sm:space-y-6 hidden w-full">
                 <!-- Toolbar chuyên nghiệp -->
-                <div class="bg-white p-5 rounded shadow-card border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="bg-white p-4 sm:p-5 rounded shadow-card border border-gray-100 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-4">
                     <div>
-                        <h2 class="text-xl font-black text-gray-800">Quản lý Tài sản Chuồng nuôi</h2>
-                        <p class="text-xs text-gray-500 mt-1 font-mono"><i class="fa-solid fa-database mr-1"></i> Database: <span class="text-material-purple font-bold">dbo.Barns</span></p>
+                        <h2 class="text-lg sm:text-xl font-black text-gray-800">Quản lý Tài sản Chuồng nuôi</h2>
+                        <p class="text-xs text-gray-500 mt-0.5 font-mono"><i class="fa-solid fa-database mr-1"></i> Database: <span class="text-material-purple font-bold">dbo.Barns</span></p>
                     </div>
-                    <div class="flex space-x-3 w-full md:w-auto">
-                        <div class="relative">
-                            <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
+                    <div class="flex flex-col sm:flex-row gap-2 sm:space-x-3 w-full sm:w-auto">
+                        <div class="relative flex-1 sm:flex-initial">
+                            <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
                             <input type="text" id="searchInput" onkeyup="timKiemChuong()" placeholder="Tìm tên vật nuôi..."
-                                class="w-full md:w-64 pl-9 pr-4 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-material-purple focus:ring-1 focus:ring-material-purple shadow-sm">
+                                class="w-full sm:w-60 pl-9 pr-4 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-material-purple focus:ring-1 focus:ring-material-purple shadow-sm">
                         </div>
                         <button onclick="moModalChuong()"
-                            class="bg-material-purple hover:bg-material-purple_light text-white text-sm font-bold px-5 py-2 rounded shadow transition-colors whitespace-nowrap">
-                            <i class="fa-solid fa-plus mr-1"></i> Thêm mới
+                            class="bg-material-purple hover:bg-material-purple_light text-white text-sm font-bold px-4 py-2 rounded shadow transition-colors whitespace-nowrap flex items-center justify-center">
+                            <i class="fa-solid fa-plus mr-1.5"></i> Thêm mới
                         </button>
                     </div>
                 </div>
 
-                <!-- Bảng Data chuyên nghiệp -->
+                <!-- Bảng Data chuyên nghiệp (Cuộn ngang mượt trên điện thoại) -->
                 <div class="bg-white rounded shadow-card overflow-hidden border border-gray-100">
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
+                        <table class="w-full text-left border-collapse min-w-[600px]">
                             <thead>
-                                <tr class="bg-gray-50 text-gray-500 text-[11px] font-black uppercase tracking-wider border-b border-gray-200">
-                                    <th class="p-4 text-center w-16">ID</th>
-                                    <th class="p-4">Loại Vật Nuôi</th>
-                                    <th class="p-4 text-center">Lệch Nhiệt</th>
-                                    <th class="p-4 text-center">Lệch NH3</th>
-                                    <th class="p-4 text-center text-material-orange">Ngưỡng Nóng</th>
-                                    <th class="p-4 text-center text-material-pink">Ngưỡng Khí Độc</th>
-                                    <th class="p-4 text-center w-32">Thao Tác</th>
+                                <tr class="bg-gray-50 text-gray-500 text-[10px] sm:text-[11px] font-black uppercase tracking-wider border-b border-gray-200">
+                                    <th class="p-3 sm:p-4 text-center w-14">ID</th>
+                                    <th class="p-3 sm:p-4">Loại Vật Nuôi</th>
+                                    <th class="p-3 sm:p-4 text-center">Lệch Nhiệt</th>
+                                    <th class="p-3 sm:p-4 text-center">Lệch NH3</th>
+                                    <th class="p-3 sm:p-4 text-center text-material-orange">Ngưỡng Nóng</th>
+                                    <th class="p-3 sm:p-4 text-center text-material-pink">Ngưỡng Khí Độc</th>
+                                    <th class="p-3 sm:p-4 text-center w-28">Thao Tác</th>
                                 </tr>
                             </thead>
-                            <tbody id="bang-crud-chuong" class="text-sm font-medium text-gray-700 divide-y divide-gray-100">
+                            <tbody id="bang-crud-chuong" class="text-xs sm:text-sm font-medium text-gray-700 divide-y divide-gray-100">
                                 <!-- JS render -->
                             </tbody>
                         </table>
@@ -481,19 +443,19 @@
             </div>
 
             <!-- 5. TAB NHẬT KÝ (LOGS) -->
-            <div id="tab-nhat-ky" class="tab-content space-y-6 hidden w-full">
-                <div class="flex justify-between items-end mb-4">
+            <div id="tab-nhat-ky" class="tab-content space-y-4 sm:space-y-6 hidden w-full">
+                <div class="flex flex-wrap justify-between items-center gap-2 mb-2 sm:mb-4">
                     <div>
-                        <h2 class="text-2xl font-black text-gray-800 tracking-tight">Nhật ký & Cảnh báo (System Logs)</h2>
-                        <p class="text-sm text-gray-500 mt-1">Ghi vết toàn bộ thao tác tự động của hệ thống IoT & AI</p>
+                        <h2 class="text-lg sm:text-2xl font-black text-gray-800 tracking-tight">Nhật ký & Cảnh báo</h2>
+                        <p class="text-xs sm:text-sm text-gray-500 mt-0.5">Ghi vết toàn bộ thao tác tự động của hệ thống IoT & AI</p>
                     </div>
-                    <button class="bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-bold px-4 py-2 rounded shadow-sm transition-all">
+                    <button class="bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs sm:text-sm font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded shadow-sm transition-all">
                         <i class="fa-solid fa-filter mr-1"></i> Lọc lỗi
                     </button>
                 </div>
 
-                <div class="bg-material-dark rounded shadow-card p-2 border-2 border-gray-800">
-                    <div class="bg-black rounded p-5 font-mono text-xs text-material-teal space-y-3 h-[500px] overflow-y-auto shadow-inner" id="system-logs">
+                <div class="bg-material-dark rounded shadow-card p-1.5 sm:p-2 border-2 border-gray-800">
+                    <div class="bg-black rounded p-3 sm:p-5 font-mono text-[11px] sm:text-xs text-material-teal space-y-3 h-[380px] sm:h-[500px] overflow-y-auto shadow-inner" id="system-logs">
                         <p><span class="text-gray-500">[2026-05-16 10:14:02]</span> <span class="text-material-purple_light font-bold">SYSTEM:</span> Khởi chạy chu trình nạp thức ăn tự động tại Silo Chuồng 01.</p>
                         <p><span class="text-gray-500">[2026-05-16 09:45:11]</span> <span class="text-material-orange font-bold">SENSOR:</span> Phát hiện khí thải NH3 Chuồng 02 tăng đạt ngưỡng 15ppm -> Tự động tăng tốc quạt hút gió.</p>
                         <p><span class="text-gray-500">[2026-05-16 07:15:34]</span> <span class="text-material-pink font-bold">AI_VISION:</span> Mật độ đàn heo Chuồng 01 phân bố bất thường (co cụm) -> Gửi thông báo đến App quản lý.</p>
@@ -504,69 +466,93 @@
 
         </main>
         
-        <!-- FOOTER -->
-        <footer class="bg-white border-t border-gray-200 py-4 px-6 flex justify-between items-center text-xs font-medium text-gray-500 z-10 shrink-0">
+        <!-- FOOTER (Ẩn trên điện thoại để nhường chỗ cho Thanh điều hướng đáy) -->
+        <footer class="hidden md:flex bg-white border-t border-gray-200 py-3 px-6 justify-between items-center text-xs font-medium text-gray-500 z-10 shrink-0">
             <p>Bản quyền © 2026 Nhóm 4 - Dự án IoT Farm. Thiết kế chuẩn ERP.</p>
             <div class="space-x-4">
                 <a href="#" class="hover:text-material-purple transition-colors">Tài liệu API</a>
                 <a href="#" class="hover:text-material-purple transition-colors">Hỗ trợ kỹ thuật</a>
             </div>
         </footer>
+
+        <!-- THANH ĐIỀU HƯỚNG ĐÁY DÀNH RIÊNG CHO ĐIỆN THOẠI (BOTTOM NAVIGATION BAR) -->
+        <nav class="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 flex justify-around items-center h-14 z-20 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
+            <button onclick="switchTab('tong-quan')" id="bnav-tong-quan" class="flex flex-col items-center justify-center flex-1 py-1 text-material-purple font-bold">
+                <i class="fa-solid fa-chart-line text-base"></i>
+                <span class="text-[10px] mt-0.5">Tổng quan</span>
+            </button>
+            <button onclick="switchTab('cam-bien')" id="bnav-cam-bien" class="flex flex-col items-center justify-center flex-1 py-1 text-gray-400 font-medium">
+                <i class="fa-solid fa-microchip text-base"></i>
+                <span class="text-[10px] mt-0.5">Cảm biến</span>
+            </button>
+            <button onclick="switchTab('ai-camera')" id="bnav-ai-camera" class="flex flex-col items-center justify-center flex-1 py-1 text-gray-400 font-medium">
+                <i class="fa-solid fa-camera-retro text-base"></i>
+                <span class="text-[10px] mt-0.5">AI CCTV</span>
+            </button>
+            <button onclick="switchTab('chuong-trai')" id="bnav-chuong-trai" class="flex flex-col items-center justify-center flex-1 py-1 text-gray-400 font-medium">
+                <i class="fa-solid fa-cubes text-base"></i>
+                <span class="text-[10px] mt-0.5">Chuồng trại</span>
+            </button>
+            <button onclick="switchTab('nhat-ky')" id="bnav-nhat-ky" class="flex flex-col items-center justify-center flex-1 py-1 text-gray-400 font-medium">
+                <i class="fa-solid fa-shield-halved text-base"></i>
+                <span class="text-[10px] mt-0.5">Nhật ký</span>
+            </button>
+        </nav>
     </div>
 
-    <!-- MODAL THÊM CHUỒNG (Thiết kế lại cho chuyên nghiệp hơn) -->
-    <div id="modal-crud-chuong" class="fixed inset-0 z-[80] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm hidden transition-all">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg overflow-hidden transform transition-all scale-100">
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h3 id="modal-crud-title" class="text-base font-black text-gray-800 uppercase tracking-wide"><i class="fa-solid fa-pen-to-square mr-2 text-material-purple"></i>Thiết lập Chuồng mới</h3>
-                <button onclick="dongModalChuong()" class="text-gray-400 hover:text-material-pink transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+    <!-- MODAL THÊM CHUỒNG (Tương thích màn hình điện thoại) -->
+    <div id="modal-crud-chuong" class="fixed inset-0 z-[80] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm hidden transition-all p-4">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[90dvh] overflow-y-auto transform transition-all scale-100">
+            <div class="px-5 py-3.5 sm:px-6 sm:py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 sticky top-0 z-10">
+                <h3 id="modal-crud-title" class="text-sm sm:text-base font-black text-gray-800 uppercase tracking-wide"><i class="fa-solid fa-pen-to-square mr-2 text-material-purple"></i>Thiết lập Chuồng mới</h3>
+                <button onclick="dongModalChuong()" class="text-gray-400 hover:text-material-pink transition-colors p-1"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
-            <form id="formChuong" class="p-6 space-y-5" onsubmit="luuChuong(event)">
+            <form id="formChuong" class="p-4 sm:p-6 space-y-4 sm:space-y-5" onsubmit="luuChuong(event)">
                 <input type="hidden" id="chuongId">
                 <div>
                     <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wider">Định danh vật nuôi</label>
-                    <input type="text" id="chuongLoai" required class="w-full border border-gray-300 rounded px-4 py-2 text-sm focus:outline-none focus:border-material-purple focus:ring-1 focus:ring-material-purple transition-shadow" placeholder="Ví dụ: Bò thịt (Khu A)">
+                    <input type="text" id="chuongLoai" required class="w-full border border-gray-300 rounded px-3.5 py-2 text-base sm:text-sm focus:outline-none focus:border-material-purple focus:ring-1 focus:ring-material-purple transition-shadow" placeholder="Ví dụ: Bò thịt (Khu A)">
                 </div>
-                <div class="grid grid-cols-2 gap-5 bg-gray-50 p-4 rounded border border-gray-100">
+                <div class="grid grid-cols-2 gap-3 sm:gap-5 bg-gray-50 p-3 sm:p-4 rounded border border-gray-100">
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Sai số Nhiệt (°C)</label>
-                        <input type="number" step="0.1" id="chuongLechNhiet" required value="0" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-material-purple text-center font-mono">
+                        <input type="number" step="0.1" id="chuongLechNhiet" required value="0" class="w-full border border-gray-300 rounded px-3 py-2 text-base sm:text-sm focus:outline-none focus:border-material-purple text-center font-mono">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Sai số NH3 (ppm)</label>
-                        <input type="number" step="0.1" id="chuongLechNh3" required value="0" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-material-purple text-center font-mono">
+                        <input type="number" step="0.1" id="chuongLechNh3" required value="0" class="w-full border border-gray-300 rounded px-3 py-2 text-base sm:text-sm focus:outline-none focus:border-material-purple text-center font-mono">
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-5 p-4 rounded border border-material-purple/20 bg-material-purple/5">
+                <div class="grid grid-cols-2 gap-3 sm:gap-5 p-3 sm:p-4 rounded border border-material-purple/20 bg-material-purple/5">
                     <div>
                         <label class="block text-[10px] font-bold text-material-orange mb-1.5 uppercase tracking-wider"><i class="fa-solid fa-fan mr-1"></i>Ngưỡng Bật Quạt</label>
-                        <input type="number" step="0.1" id="chuongNguongNong" required value="30.0" class="w-full border border-material-orange/50 rounded px-3 py-2 text-sm focus:outline-none focus:border-material-orange focus:ring-1 focus:ring-material-orange text-center font-mono text-material-orange bg-white">
+                        <input type="number" step="0.1" id="chuongNguongNong" required value="30.0" class="w-full border border-material-orange/50 rounded px-3 py-2 text-base sm:text-sm focus:outline-none focus:border-material-orange focus:ring-1 focus:ring-material-orange text-center font-mono text-material-orange bg-white">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-material-pink mb-1.5 uppercase tracking-wider"><i class="fa-solid fa-wind mr-1"></i>Ngưỡng Hút Khí</label>
-                        <input type="number" step="0.1" id="chuongNguongNh3" required value="15.0" class="w-full border border-material-pink/50 rounded px-3 py-2 text-sm focus:outline-none focus:border-material-pink focus:ring-1 focus:ring-material-pink text-center font-mono text-material-pink bg-white">
+                        <input type="number" step="0.1" id="chuongNguongNh3" required value="15.0" class="w-full border border-material-pink/50 rounded px-3 py-2 text-base sm:text-sm focus:outline-none focus:border-material-pink focus:ring-1 focus:ring-material-pink text-center font-mono text-material-pink bg-white">
                     </div>
                 </div>
                 <div class="flex justify-end space-x-3 pt-2">
-                    <button type="button" onclick="dongModalChuong()" class="px-5 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-bold rounded shadow-sm transition-colors">Hủy Bỏ</button>
-                    <button type="submit" class="px-5 py-2 bg-material-purple hover:bg-material-purple_light text-white text-sm font-bold rounded shadow transition-colors"><i class="fa-solid fa-check mr-2"></i>Lưu cấu hình</button>
+                    <button type="button" onclick="dongModalChuong()" class="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs sm:text-sm font-bold rounded shadow-sm transition-colors">Hủy Bỏ</button>
+                    <button type="submit" class="px-4 py-2 bg-material-purple hover:bg-material-purple_light text-white text-xs sm:text-sm font-bold rounded shadow transition-colors"><i class="fa-solid fa-check mr-1.5"></i>Lưu cấu hình</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- MODAL PROFILE -->
-    <div id="profile-modal" class="fixed inset-0 z-[70] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm hidden transition-all no-print">
+    <div id="profile-modal" class="fixed inset-0 z-[70] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm hidden transition-all no-print p-4">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden transform transition-all scale-100">
-            <div class="bg-material-dark p-6 text-center relative text-white border-b-4 border-material-purple">
-                <button onclick="dongModalProfile()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+            <div class="bg-material-dark p-5 sm:p-6 text-center relative text-white border-b-4 border-material-purple">
+                <button onclick="dongModalProfile()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors p-1">
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
-                <div id="modal-user-avatar" class="w-20 h-20 bg-material-purple rounded-full flex items-center justify-center mx-auto mb-3 text-3xl font-black uppercase shadow-lg border-4 border-white">--</div>
-                <h3 id="modal-user-fullname" class="text-lg font-black tracking-wide">...</h3>
+                <div id="modal-user-avatar" class="w-16 h-16 sm:w-20 sm:h-20 bg-material-purple rounded-full flex items-center justify-center mx-auto mb-3 text-2xl sm:text-3xl font-black uppercase shadow-lg border-4 border-white">--</div>
+                <h3 id="modal-user-fullname" class="text-base sm:text-lg font-black tracking-wide">...</h3>
                 <p id="modal-user-role" class="text-[10px] text-material-teal font-mono mt-1 uppercase tracking-widest">Quản trị viên Hệ thống</p>
             </div>
-            <div class="p-6 space-y-4 text-sm bg-gray-50">
+            <div class="p-5 sm:p-6 space-y-3 sm:space-y-4 text-sm bg-gray-50">
                 <div class="flex justify-between items-center p-3 bg-white rounded border border-gray-200 shadow-sm">
                     <span class="text-gray-500 text-xs font-bold uppercase"><i class="fa-solid fa-id-card mr-2 text-material-purple"></i>ID định danh</span>
                     <span id="modal-user-username" class="font-bold text-gray-800 font-mono">...</span>
@@ -576,60 +562,89 @@
                     <span class="font-bold text-white bg-material-teal px-2 py-0.5 rounded text-[10px]">CẤP ĐỘ 1</span>
                 </div>
             </div>
-            <!-- Bổ sung vào cuối Modal Profile -->
             <div class="p-4 bg-gray-100 border-t border-gray-200">
-                <button onclick="dangXuat()" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-2 rounded shadow transition-colors uppercase tracking-widest text-xs">
+                <button onclick="dangXuat()" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 rounded shadow transition-colors uppercase tracking-widest text-xs">
                     <i class="fa-solid fa-right-from-bracket mr-2"></i> Đăng xuất
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- <script src="http://localhost:3000/socket.io/socket.io.js"></script> -->
     <script src="script.js"></script>
 
-    <!-- Script cập nhật thanh Breadcrumb và trạng thái Menu khi đổi Tab -->
-<script>
-    const originalSwitchTab = window.switchTab;
-    if(typeof originalSwitchTab === 'function') {
-        window.switchTab = function(tabId) {
-            // 1. Chạy hàm đổi tab gốc để ẩn/hiện nội dung
-            originalSwitchTab(tabId);
-            
-            // 2. Cập nhật Breadcrumb (Thanh điều hướng trên cùng)
-            const breadcrumbMap = {
-                'tong-quan': 'Bảng điều khiển',
-                'cam-bien': 'Giám sát Vận hành / Cảm biến (Telemetry)',
-                'ai-camera': 'Giám sát Vận hành / Trạm AI CCTV',
-                'chuong-trai': 'Quản lý Tài sản / Cấu hình Chuồng nuôi',
-                'nhat-ky': 'Hệ thống / Nhật ký & Cảnh báo'
-            };
-            
-            const breadcrumbEl = document.getElementById('breadcrumb-current');
-            if(breadcrumbEl && breadcrumbMap[tabId]) {
-                breadcrumbEl.innerText = breadcrumbMap[tabId];
-            }
+    <!-- Script điều khiển Menu Mobile, Breadcrumb và đồng bộ trạng thái Tab -->
+    <script>
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('main-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (!sidebar || !overlay) return;
 
-            // 3. ĐỔI MÀU MENU BÊN TRÁI (Xử lý lỗi ông vừa hỏi)
-            // Danh sách ID của các thẻ <a> menu
-            const menuIds = ['tong-quan', 'cam-bien', 'ai-camera', 'chuong-trai', 'nhat-ky'];
-            
-            menuIds.forEach(id => {
-                const menuEl = document.getElementById('menu-' + id);
-                if (menuEl) {
-                    if (id === tabId) {
-                        // Class khi ĐANG ĐƯỢC CHỌN (Sáng lên, có viền tím)
-                        menuEl.className = "flex items-center px-5 py-3 text-sm font-bold text-white bg-white/10 border-l-4 border-material-purple transition-all";
-                        menuEl.querySelector('i').classList.remove('group-hover:text-material-teal', 'group-hover:text-material-pink', 'group-hover:text-material-orange');
-                    } else {
-                        // Class khi KHÔNG ĐƯỢC CHỌN (Màu xám, tối đi)
-                        menuEl.className = "group flex items-center px-5 py-3 text-sm text-gray-400 font-medium hover:text-white hover:bg-white/5 border-l-4 border-transparent hover:border-gray-500 transition-all";
-                    }
+            const isHidden = sidebar.classList.contains('-translate-x-full');
+            if (isHidden) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        const originalSwitchTab = window.switchTab;
+        if (typeof originalSwitchTab === 'function') {
+            window.switchTab = function(tabId) {
+                // 1. Chạy hàm đổi tab gốc
+                originalSwitchTab(tabId);
+                
+                // 2. Cập nhật Breadcrumb & Tiêu đề trên Mobile
+                const breadcrumbMap = {
+                    'tong-quan': 'Bảng điều khiển',
+                    'cam-bien': 'Cảm biến (Telemetry)',
+                    'ai-camera': 'Trạm AI CCTV',
+                    'chuong-trai': 'Cấu hình Chuồng nuôi',
+                    'nhat-ky': 'Nhật ký & Cảnh báo'
+                };
+                
+                const breadcrumbEl = document.getElementById('breadcrumb-current');
+                if (breadcrumbEl && breadcrumbMap[tabId]) {
+                    breadcrumbEl.innerText = breadcrumbMap[tabId];
                 }
-            });
-        };
-    }
-</script>
-    
+                const mobileTitleEl = document.getElementById('mobile-header-title');
+                if (mobileTitleEl && breadcrumbMap[tabId]) {
+                    mobileTitleEl.innerText = breadcrumbMap[tabId];
+                }
+
+                // 3. Đổi màu Menu bên trái & Thanh điều hướng dưới đáy (Mobile)
+                const menuIds = ['tong-quan', 'cam-bien', 'ai-camera', 'chuong-trai', 'nhat-ky'];
+                menuIds.forEach(id => {
+                    const menuEl = document.getElementById('menu-' + id);
+                    const bnavEl = document.getElementById('bnav-' + id);
+
+                    if (menuEl) {
+                        if (id === tabId) {
+                            menuEl.className = "flex items-center px-5 py-3 text-sm font-bold text-white bg-white/10 border-l-4 border-material-purple transition-all";
+                        } else {
+                            menuEl.className = "group flex items-center px-5 py-3 text-sm text-gray-400 font-medium hover:text-white hover:bg-white/5 border-l-4 border-transparent hover:border-gray-500 transition-all";
+                        }
+                    }
+
+                    if (bnavEl) {
+                        if (id === tabId) {
+                            bnavEl.className = "flex flex-col items-center justify-center flex-1 py-1 text-material-purple font-bold transition-colors";
+                        } else {
+                            bnavEl.className = "flex flex-col items-center justify-center flex-1 py-1 text-gray-400 font-medium hover:text-gray-600 transition-colors";
+                        }
+                    }
+                });
+
+                // 4. Tự động đóng menu trượt nếu đang mở trên điện thoại
+                const sidebar = document.getElementById('main-sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                if (window.innerWidth < 768 && sidebar && !sidebar.classList.contains('-translate-x-full')) {
+                    sidebar.classList.add('-translate-x-full');
+                    if (overlay) overlay.classList.add('hidden');
+                }
+            };
+        }
+    </script>
 </body>
-</html>  
+</html>

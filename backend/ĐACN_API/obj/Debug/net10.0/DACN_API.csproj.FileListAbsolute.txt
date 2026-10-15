@@ -364,3 +364,4 @@ D:\DACN_Haui\backend\ĐACN_API\obj\Debug\net10.0\refint\DACN_API.dll
 D:\DACN_Haui\backend\ĐACN_API\obj\Debug\net10.0\DACN_API.pdb
 D:\DACN_Haui\backend\ĐACN_API\obj\Debug\net10.0\DACN_API.genruntimeconfig.cache
 D:\DACN_Haui\backend\ĐACN_API\obj\Debug\net10.0\ref\DACN_API.dll
+D:\DACN_Haui\backend\ĐACN_API\obj\Debug\net10.0\DACN_API.sourcelink.json

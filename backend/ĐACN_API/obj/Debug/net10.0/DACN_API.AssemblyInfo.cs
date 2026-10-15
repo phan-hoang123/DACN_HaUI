@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DACN_API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+34962060746a98b24ee068f6654923da6e7b7bd6")]
 [assembly: System.Reflection.AssemblyProductAttribute("DACN_API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DACN_API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

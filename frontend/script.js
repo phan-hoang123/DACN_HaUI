@@ -1,44 +1,36 @@
-// --- 1. ĐỒNG HỒ THỜI GIAN THỰC ---
+// Đồng hồ đếm thời gian thực
 setInterval(() => {
-  const now = new Date();
+  const now = new Date(); // Lấy thời gian hiện tại
   document.getElementById("live-clock").innerText =
-    now.toLocaleTimeString("vi-VN") + " | " + now.toLocaleDateString("vi-VN");
-}, 1000);
+    now.toLocaleTimeString("vi-VN") + " | " + now.toLocaleDateString("vi-VN"); // Cập nhật đồng hồ mỗi giây
+}, 1000); 
 
-// --- 2. LOGIC CHUYỂN TAB MỤC LỤC ---
+// Logic chuyển tab 
 function switchTab(tabId) {
   document
-    .querySelectorAll(".tab-content")
-    .forEach((tab) => tab.classList.add("hidden"));
-  document.getElementById("tab-" + tabId).classList.remove("hidden");
+    .querySelectorAll(".tab-content") // Lấy tất cả các tab-content
+    .forEach((tab) => tab.classList.add("hidden")); // Ẩn tất cả các tab-content
+  document.getElementById("tab-" + tabId).classList.remove("hidden"); // Hiển thị tab-content tương ứng với tabId
 
   document.querySelectorAll("nav a").forEach((menu) => {
-    menu.classList.remove("active-menu");
-    menu.classList.add("hover:bg-slate-800", "hover:text-white");
+    menu.classList.remove("active-menu"); 
+    menu.classList.add("hover:text-blue-500"); 
   });
   const currentMenu = document.getElementById("menu-" + tabId);
   currentMenu.classList.add("active-menu");
-  currentMenu.classList.remove("hover:bg-slate-800", "hover:text-white");
-
-  const titles = {
-    "tong-quan": "Bảng Điều Khiển",
-    "cam-bien": "Giám Sát Hệ Thống Cảm Biến Real-time",
-    "chuong-trai": "Cấu Hình Ngưỡng Thiết Bị Chuồng Trại",
-    "nhat-ky": "Nhật Ký Nhật Trình Hệ Thống IoT",
-    "ai-camera": "AI Camera Giám Sát Hành Vi Vật Nuôi",
-  };
-  document.getElementById("page-title").innerText = titles[tabId];
+  currentMenu.classList.remove("hover:text-blue-500");
+// Cập nhật tiêu đề trang
   if (tabId === 'ai-camera') {
       startMultiCamAI();
   }
 }
 
-// --- 3. CẤU HÌNH CÁC BIỂU ĐỒ ---
+// Cấu hình biểu đồ
 Chart.defaults.font.family = "'Inter', sans-serif";
 Chart.defaults.color = "#64748b";
 
-const ctxMain = document.getElementById("mainDashboardChart").getContext("2d");
-const mainChart = new Chart(ctxMain, {
+const ctxMain = document.getElementById("mainDashboardChart").getContext("2d"); // Lấy ngữ cảnh vẽ cho biểu đồ chính
+const mainChart = new Chart(ctxMain, { // Khởi tạo biểu đồ chính
   type: "line",
   data: {
     labels: [],
@@ -95,25 +87,26 @@ const mainChart = new Chart(ctxMain, {
   },
 });
 
-// Biến toàn cục rỗng, chờ châm data từ CSDL C#
+// Biến toàn cục rỗng, chờ lấy dữ liệu từ backend
 let danhSachChuong = [];
 
-// =========================================================
-// MODULE: KẾT NỐI API THỰC TẾ (REAL DB INTERACTION)
-// =========================================================
-
-// 1. TẢI DỮ LIỆU TỪ BACKEND
+//Kết nối API Backend để lấy dữ liệu chuồng trại và cập nhật giao diện
+// 1. Lấy dữ liệu từ Backend
 async function loadDanhSachChuong() {
   try {
-    const response = await fetch("https://localhost:7141/api/barn");
+    const response = await fetch("/api/barn");
     if (response.ok) {
-      danhSachChuong = await response.json();
+      danhSachChuong = await response.json(); 
 
-      // Ép Web "F5" lại toàn bộ giao diện bằng data thật
+      // Gọi một loạt các hàm render ở đây
       renderBangCrudChuong(danhSachChuong);
       renderGiaoDienChuongTrai();
       renderCameraList();
       renderAICameraGrid();
+      
+      // THÊM DÒNG NÀY VÀO ĐỂ NÓ CẬP NHẬT DANH SÁCH VẬN HÀNH NHANH
+      renderDanhSachVanHanhNhanh(danhSachChuong); 
+      startMultiCamAI();
     }
   } catch (error) {
     console.error("Lỗi kéo dữ liệu từ CSDL:", error);
@@ -122,15 +115,16 @@ async function loadDanhSachChuong() {
 // Chạy ngay khi vào web
 loadDanhSachChuong();
 
+
 // 2. XÓA CHUỒNG (GỌI API DELETE REAL)
-async function xoaChuong(id) {
+async function xoaChuong(id) { 
   if (
     confirm(
-      `⚠️ Nguy hiểm: Việc xóa Node Chuồng ID-${id} có thể làm đứt gãy tín hiệu cảm biến IoT. Bạn có chắc chắn muốn xóa?`,
+      `Xóa Node Chuồng ID-${id} có thể làm mất cảm biến IoT!`,
     )
   ) {
     try {
-      await fetch(`https://localhost:7141/api/barn/${id}`, {
+      await fetch(`/api/barn/${id}`, {
         method: "DELETE",
       });
 
@@ -150,8 +144,8 @@ async function xoaChuong(id) {
 async function luuChuong(event) {
   event.preventDefault();
 
-  const id = document.getElementById("chuongId").value;
-  const payload = {
+  const id = document.getElementById("chuongId").value; // Lấy ID chuồng (nếu có) để xác định là thêm mới hay sửa
+  const payload = { // Dữ liệu gửi lên API
     loai: document.getElementById("chuongLoai").value,
     lechNhietDo: parseFloat(document.getElementById("chuongLechNhiet").value),
     lechNh3: parseFloat(document.getElementById("chuongLechNh3").value),
@@ -161,23 +155,23 @@ async function luuChuong(event) {
 
   try {
     if (id) {
-      // SỬA: GỌI PUT
-      payload.id = parseInt(id);
-      payload.prefix = danhSachChuong.find((c) => c.id == id).prefix;
+      // CẬP NHẬT: GỌI PUT
+      payload.id = parseInt(id); // Nếu có ID thì gửi PUT để cập nhật
+      payload.prefix = danhSachChuong.find((c) => c.id == id).prefix; // Lấy prefix cũ để giữ nguyên
 
-      await fetch(`https://localhost:7141/api/barn/${id}`, {
+      await fetch(`/api/barn/${id}`, { 
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload), // Gửi dữ liệu JSON lên API
       });
-      addSystemLog(
+      addSystemLog( // Ghi log hệ thống
         `HỆ THỐNG: Quản trị viên đã hiệu chỉnh lại thông số ngưỡng cho chuồng ID-${id}.`,
         "SYSTEM",
       );
     } else {
       // THÊM MỚI: GỌI POST
       payload.prefix = "t" + Math.floor(Math.random() * 1000); // Sinh random prefix cho mạch
-      await fetch("https://localhost:7141/api/barn", {
+      await fetch("/api/barn", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -189,7 +183,6 @@ async function luuChuong(event) {
     }
 
     dongModalChuong();
-    // Cập nhật lại toàn bộ Web
     loadDanhSachChuong();
   } catch (error) {
     console.error("Lỗi lưu dữ liệu:", error);
@@ -197,15 +190,15 @@ async function luuChuong(event) {
 }
 
 function renderGiaoDienChuongTrai() {
-  const bangTrangThai = document.getElementById("bang-trang-thai-chuong");
-  const luoiCamBien = document.getElementById("luoi-the-cam-bien");
+  const bangTrangThai = document.getElementById("bang-trang-thai-chuong"); // Bảng tổng quan trạng thái chuồng
+  const luoiCamBien = document.getElementById("luoi-the-cam-bien"); // Lưới thẻ cảm biến
 
-  let htmlBang = "";
+  let htmlBang = ""; 
   let htmlCamBien = "";
 
   danhSachChuong.forEach((chuong) => {
-    const maChuong = chuong.id > 9 ? chuong.id : "0" + chuong.id;
-    const mauChuDao = chuong.id % 2 === 0 ? "indigo" : "blue";
+    const maChuong = chuong.id > 9 ? chuong.id : "0" + chuong.id; // Định dạng mã chuồng có 2 chữ số
+    const mauChuDao = chuong.id % 2 === 0 ? "indigo" : "blue"; // Màu chủ đạo cho từng chuồng 
 
     // 1. Vẽ dòng cho Bảng Tổng Quan
     htmlBang += `
@@ -258,17 +251,15 @@ function renderGiaoDienChuongTrai() {
 }
 renderGiaoDienChuongTrai();
 
-// =========================================================
-// MODULE: CRUD QUẢN LÝ CHUỒNG TRẠI (TẠI GIAO DIỆN)
-// =========================================================
-
+// Chức năng CRUD cho quản lý chuồng trại
 // 1. Hàm vẽ (Render) bảng dữ liệu quản lý
 function renderBangCrudChuong(data) {
-  const tbody = document.getElementById("bang-crud-chuong");
+  const tbody = document.getElementById("bang-crud-chuong"); // Lấy tbody của bảng quản lý chuồng trại
   if (!tbody) return;
 
+  // Xây dựng HTML cho từng dòng dữ liệu chuồng trại
   let html = "";
-  data.forEach((chuong) => {
+  data.forEach((chuong) => { // Duyệt qua từng chuồng trong danh sách dữ liệu
     const maChuong = chuong.id > 9 ? chuong.id : "0" + chuong.id;
     html += `
             <tr class="hover:bg-blue-50 transition-colors">
@@ -285,35 +276,107 @@ function renderBangCrudChuong(data) {
             </tr>
         `;
   });
-
-  if (data.length === 0) {
+ 
+  if (data.length === 0) { // Nếu không có dữ liệu chuồng trại, hiển thị thông báo
     html = `<tr><td colspan="7" class="p-8 text-center text-slate-400 italic font-medium">Không tìm thấy dữ liệu chuồng trại...</td></tr>`;
   }
 
   tbody.innerHTML = html;
 }
-
-// Chạy lần đầu lúc vừa vào web
 renderBangCrudChuong(danhSachChuong);
 
-// 2. Logic Tìm Kiếm (Search) - Gõ đến đâu lọc đến đấy
+// 8. Hàm tạo thẻ HTML cho phần Vận Hành Nhanh
+function renderDanhSachVanHanhNhanh(data) {
+    const listVanHanhNhanh = document.getElementById("danh-sach-van-hanh-nhanh");
+    if (!listVanHanhNhanh) return;
+
+    let html = "";
+    
+    // Đếm số chuồng để hiển thị lên thẻ Badge
+    const tongSoChuong = data.length;
+    const badgeSoChuong = document.querySelector("#tab-tong-quan .bg-gray-200.px-2.py-1.rounded");
+    if (badgeSoChuong) {
+        badgeSoChuong.innerText = `${tongSoChuong} CHUỒNG`;
+    }
+
+    data.forEach((chuong) => {
+        const maChuong = chuong.id > 9 ? chuong.id : "0" + chuong.id;
+        
+        // Tạo hiệu ứng random cho quạt và cám để demo (giống thẻ cũ)
+        const quatDangBat = Math.random() > 0.5;
+        const mauQuat = quatDangBat ? "text-material-orange border-material-orange/30 bg-material-orange/10" : "text-gray-500 border-gray-200 bg-gray-100";
+        const iconQuat = quatDangBat ? "fa-spin" : "";
+        const chuQuat = quatDangBat ? "BẬT" : "TẮT";
+
+        html += `
+            <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:border-material-purple transition-colors group">
+                <div class="flex justify-between items-start mb-3 border-b border-gray-100 pb-2">
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-800 group-hover:text-material-purple transition-colors">CHUONG-${maChuong}</h4>
+                        <p class="text-[10px] text-gray-500 font-mono mt-0.5">${chuong.loai}</p>
+                    </div>
+                    <div class="flex space-x-1">
+                        <span class="bg-material-teal/10 text-material-teal border border-material-teal/30 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center" title="Máng ăn">
+                            <i class="fa-solid fa-bowl-food mr-1"></i> ĐẦY
+                        </span>
+                        <span class="${mauQuat} text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center ${quatDangBat ? 'animate-pulse' : ''}" title="Hệ thống làm mát">
+                            <i class="fa-solid fa-fan mr-1 ${iconQuat}"></i> ${chuQuat}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="text-center bg-gray-50 rounded p-1.5 border border-gray-100">
+                        <p class="text-[9px] text-gray-400 font-bold uppercase mb-0.5">Nhiệt độ</p>
+                        <p class="text-xs font-black text-material-pink" id="vh-temp-${chuong.id}">--°C</p>
+                    </div>
+                    <div class="text-center bg-gray-50 rounded p-1.5 border border-gray-100">
+                        <p class="text-[9px] text-gray-400 font-bold uppercase mb-0.5">Độ ẩm</p>
+                        <p class="text-xs font-black text-material-purple" id="vh-humid-${chuong.id}">--%</p>
+                    </div>
+                    <div class="text-center bg-gray-50 rounded p-1.5 border border-gray-100">
+                        <p class="text-[9px] text-gray-400 font-bold uppercase mb-0.5">Khí NH3</p>
+                        <p class="text-xs font-black text-material-orange" id="vh-nh3-${chuong.id}">-- ppm</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    if (data.length === 0) {
+        html = `<p class="text-center text-xs text-gray-400 py-10">Chưa có dữ liệu chuồng trại.</p>`;
+    }
+
+    listVanHanhNhanh.innerHTML = html;
+}
+
+function locVanHanhNhanh() {
+  const keyword = (document.getElementById("search-van-hanh")?.value || "").toLowerCase();
+  const cards = document.querySelectorAll("#danh-sach-van-hanh-nhanh > div");
+  cards.forEach((card) => {
+    const text = card.innerText.toLowerCase();
+    card.style.display = text.includes(keyword) ? "" : "none";
+  });
+}
+
+// 2. Logic Tìm Kiếm 
 function timKiemChuong() {
-  const keyword = document.getElementById("searchInput").value.toLowerCase();
+  const keyword = document.getElementById("searchInput").value.toLowerCase(); // Lấy từ khóa tìm kiếm và chuyển về chữ thường
   const filteredData = danhSachChuong.filter((chuong) =>
-    chuong.loai.toLowerCase().includes(keyword),
+    chuong.loai.toLowerCase().includes(keyword), // Lọc danh sách chuồng trại dựa trên từ khóa tìm kiếm
   );
   renderBangCrudChuong(filteredData);
 }
 
 // 4. Bật/Tắt Hộp thoại Modal
 function moModalChuong(id = null) {
-  document.getElementById("modal-crud-chuong").classList.remove("hidden");
+  document.getElementById("modal-crud-chuong").classList.remove("hidden"); // Hiển thị modal
 
   if (id) {
     // Trạng thái SỬA (Update)
     document.getElementById("modal-crud-title").innerHTML =
-      '<i class="fa-solid fa-pen-to-square mr-2 text-blue-600"></i>CẬP NHẬT THÔNG TIN CHUỒNG';
-    const c = danhSachChuong.find((item) => item.id === id);
+      '<i class="fa-solid fa-pen-to-square mr-2 text-blue-600"></i>CẬP NHẬT THÔNG TIN CHUỒNG'; // Cập nhật tiêu đề modal
+    const c = danhSachChuong.find((item) => item.id === id); // Tìm chuồng trại theo ID để điền dữ liệu vào form
     document.getElementById("chuongId").value = c.id;
     document.getElementById("chuongLoai").value = c.loai;
     document.getElementById("chuongLechNhiet").value = c.lechNhietDo;
@@ -321,25 +384,24 @@ function moModalChuong(id = null) {
     document.getElementById("chuongNguongNong").value = c.nguongNong;
     document.getElementById("chuongNguongNh3").value = c.nguongNh3;
   } else {
-    // Trạng thái THÊM MỚI (Create)
+    // Trạng thái thêm mới
     document.getElementById("modal-crud-title").innerHTML =
       '<i class="fa-solid fa-plus mr-2 text-emerald-600"></i>THÊM CHUỒNG MỚI';
-    document.getElementById("formChuong").reset();
+    document.getElementById("formChuong").reset(); // Reset form về mặc định
     document.getElementById("chuongId").value = ""; // Reset ID về rỗng
   }
 }
 
 function dongModalChuong() {
-  document.getElementById("modal-crud-chuong").classList.add("hidden");
+  document.getElementById("modal-crud-chuong").classList.add("hidden"); // Ẩn modal
 }
 
-// --- BIỂU ĐỒ AI CAMERA HISTORY ---
+// Biểu đồ lịch sử AI
 let aiHistoryChart;
-
 async function taiBieuDoLichSuAI() {
   try {
     // Tạm thời ẩn việc gọi API thật đi để tránh lỗi 404
-    // const response = await fetch("https://localhost:7141/api/ai/history");
+    // const response = await fetch("/api/ai/history");
     // const data = await response.json();
 
     // Tạo mảng dữ liệu giả lập chuẩn cấu trúc
@@ -364,18 +426,18 @@ async function taiBieuDoLichSuAI() {
     const labels = [...new Set(data.map((item) => item.date_label))];
 
     // Lọc mảng dữ liệu riêng cho từng chuồng
-    const dataChuong1 = data.filter((item) => item.chuong_id === 1).map((item) => item.total_count);
+    const dataChuong1 = data.filter((item) => item.chuong_id === 1).map((item) => item.total_count); 
     const dataChuong2 = data.filter((item) => item.chuong_id === 2).map((item) => item.total_count);
 
-    const ctxAiHistory = document.getElementById("aiHistoryChart");
+    const ctxAiHistory = document.getElementById("aiHistoryChart"); // Lấy ngữ cảnh vẽ cho biểu đồ lịch sử AI
     if (!ctxAiHistory) return;
 
     if (aiHistoryChart) {
-      aiHistoryChart.destroy();
+      aiHistoryChart.destroy(); // Nếu biểu đồ đã tồn tại, hủy nó trước khi tạo mới để tránh trùng lặp
     }
 
     // Khởi tạo Chart.js
-    aiHistoryChart = new Chart(ctxAiHistory.getContext("2d"), {
+    aiHistoryChart = new Chart(ctxAiHistory.getContext("2d"), { // Tạo biểu đồ mới
       type: "bar",
       data: {
         labels: labels,
@@ -410,141 +472,232 @@ async function taiBieuDoLichSuAI() {
 
 taiBieuDoLichSuAI();
 
-// 1. VÒNG LẶP NHANH: CẬP NHẬT CẢM BIẾN (3 GIÂY/LẦN)
+// Vòng lặp cập nhật dữ liệu RIÊNG BIỆT cho từng chuồng mỗi 3 giây (GỌI TỪ /api/barn)
 setInterval(async () => {
   try {
-    const sensorResponse = await fetch(
-      "https://localhost:7141/api/sensors/latest",
-    );
-    const sensorData = await sensorResponse.json();
+    const timestamp = new Date().getTime();
+    const response = await fetch(`/api/barn?t=${timestamp}`);
+    if (!response.ok) return;
+    const barnsData = await response.json();
 
-    if (sensorData && sensorData.temperature) {
-      kiemTraVaDieuKhienQuat(sensorData.temperature, sensorData.nh3);
+    // Lưu lại vào biến toàn cục nếu cần
+    danhSachChuong = barnsData;
 
-      document.getElementById("kpi-temp").innerText =
-        sensorData.temperature + "°C";
-      document.getElementById("kpi-do-am").innerHTML = 
-        sensorData.humidity + '<span class="text-lg font-bold text-slate-400 ml-1">%</span>';
-      const kpiTongDan = document.getElementById("kpi-tong-dan");
-      if (kpiTongDan && sensorData.tong_dan) {
-        kpiTongDan.innerText = sensorData.tong_dan.toLocaleString('vi-VN');
-      }
+    let tongNhiet = 0, tongAm = 0, tongNh3 = 0, soChuongCoData = 0;
 
-      // Giả lập logic AI tự động hóa thiết bị
-      if (sensorData.nh3 > 12) {
-        addSystemLog(
-          `Khí NH3 (${sensorData.nh3} ppm) vượt ngưỡng -> Kích hoạt quạt hút ly tâm khu 01.`,
-          "WARNING",
-        );
-      } else if (sensorData.temperature > 28.5) {
-        addSystemLog(
-          `Nhiệt độ tăng cao (${sensorData.temperature}°C) -> Mở rèm tự động và bật phun sương làm mát.`,
-          "SENSOR",
-        );
-      } else {
-        if (Math.random() > 0.7) {
-          addSystemLog(
-            `Đồng bộ môi trường ổn định (Temp: ${sensorData.temperature}°C, Humid: ${sensorData.humidity}%).`,
-            "SYSTEM",
-          );
-        }
-      }
+    barnsData.forEach((chuong) => {
+      // Lấy dữ liệu cảm biến riêng của từng chuồng từ C# trả về
+      const rawTemp = chuong.nhietDoHienTai ?? chuong.NhietDoHienTai;
+      const rawHumid = chuong.doAmHienTai ?? chuong.DoAmHienTai;
+      const rawNh3 = chuong.nh3HienTai ?? chuong.Nh3HienTai;
 
-      // --- LOGIC TỰ ĐỘNG HÓA & CẬP NHẬT SỐ LIỆU ĐỘNG CHO N CHUỒNG ---
-      danhSachChuong.forEach((chuong) => {
-        const nhietDoChuong = (
-          parseFloat(sensorData.temperature) + chuong.lechNhietDo
-        ).toFixed(1);
-        const humidChuong = Math.min(
-          100,
-          Math.max(
-            0,
-            parseInt(sensorData.humidity) + (chuong.id === 2 ? 4 : 0),
-          ),
-        );
-        const nh3Chuong = parseInt(sensorData.nh3) + chuong.lechNh3;
+      if (rawTemp !== null && rawTemp !== undefined) {
+        const lechNhiet = Number(chuong.lechNhietDo ?? chuong.LechNhietDo) || 0;
+        const lechKhi = Number(chuong.lechNh3 ?? chuong.LechNh3) || 0;
+        const nguongNong = Number(chuong.nguongNong ?? chuong.NguongNong) || 30;
+        const nguongKhi = Number(chuong.nguongNh3 ?? chuong.NguongNh3) || 15;
 
-        // A. CẬP NHẬT CÁC CHỈ SỐ SỐ REAL-TIME
-        // 1. Cập nhật tại Tab Giám Sát Cảm Biến
+        // Tính chỉ số thực tế của chuồng (không còn cộng +4% cứng nữa)
+        const nhietDoChuong = (Number(rawTemp) + lechNhiet).toFixed(1);
+        const humidChuong = Math.min(100, Math.max(0, Number(rawHumid))).toFixed(1);
+        const nh3Chuong = (Number(rawNh3 || 10) + lechKhi).toFixed(1);
+
+        // Cộng dồn để tính trung bình cho 4 thẻ KPI trên đầu trang
+        tongNhiet += Number(nhietDoChuong);
+        tongAm += Number(humidChuong);
+        tongNh3 += Number(nh3Chuong);
+        soChuongCoData++;
+
+        // 1. Cập nhật tab Giám sát Cảm biến (Telemetry)
         const txtCamBienTemp = document.getElementById(`c${chuong.id}-temp`);
         const txtCamBienHumid = document.getElementById(`c${chuong.id}-humid`);
         const txtCamBienNh3 = document.getElementById(`c${chuong.id}-nh3`);
-
         if (txtCamBienTemp) txtCamBienTemp.innerText = nhietDoChuong + "°C";
         if (txtCamBienHumid) txtCamBienHumid.innerText = humidChuong + "%";
         if (txtCamBienNh3) txtCamBienNh3.innerText = nh3Chuong + " ppm";
 
-        // 2. Cập nhật tại Bảng Tổng Quan ngoài trang chủ
+        // 2. Cập nhật Bảng Tổng Quan
         const txtTongQuanTemp = document.getElementById(`t1-t${chuong.id}`);
         const txtTongQuanHumid = document.getElementById(`t1-h${chuong.id}`);
         const txtTongQuanNh3 = document.getElementById(`t1-g${chuong.id}`);
-
         if (txtTongQuanTemp) txtTongQuanTemp.innerText = nhietDoChuong + " °C";
         if (txtTongQuanHumid) txtTongQuanHumid.innerText = humidChuong + " %";
         if (txtTongQuanNh3) txtTongQuanNh3.innerText = nh3Chuong + " ppm";
 
-        // B. LOGIC ĐIỀU KHIỂN THIẾT BỊ
+        // 3. Cập nhật thẻ VẬN HÀNH NHANH
+        const txtVHTemp = document.getElementById(`vh-temp-${chuong.id}`);
+        const txtVHHumid = document.getElementById(`vh-humid-${chuong.id}`);
+        const txtVHNh3 = document.getElementById(`vh-nh3-${chuong.id}`);
+
+        if (txtVHTemp) {
+          txtVHTemp.innerText = nhietDoChuong + "°C";
+          if (Number(nhietDoChuong) >= nguongNong) {
+            txtVHTemp.classList.replace("text-material-pink", "text-rose-600");
+            txtVHTemp.classList.add("animate-pulse");
+          } else {
+            txtVHTemp.classList.replace("text-rose-600", "text-material-pink");
+            txtVHTemp.classList.remove("animate-pulse");
+          }
+        }
+        if (txtVHHumid) txtVHHumid.innerText = humidChuong + "%";
+        if (txtVHNh3) {
+          txtVHNh3.innerText = nh3Chuong + " ppm";
+          if (Number(nh3Chuong) >= nguongKhi) {
+            txtVHNh3.classList.replace("text-material-orange", "text-rose-600");
+            txtVHNh3.classList.add("animate-pulse");
+          } else {
+            txtVHNh3.classList.replace("text-rose-600", "text-material-orange");
+            txtVHNh3.classList.remove("animate-pulse");
+          }
+        }
+
+        // 4. Cập nhật trạng thái Quạt & Phun sương
         const fan = document.getElementById(`device-fan-${chuong.id}`);
         const mist = document.getElementById(`device-mist-${chuong.id}`);
-        const sttCool = document.getElementById(`${chuong.prefix}-stt-cool`);
-        const sttFeed = document.getElementById(`${chuong.prefix}-stt-feed`);
-
-        if (fan && mist) {
-          if (nh3Chuong > chuong.nguongNh3) {
-            fan.className = "text-amber-600 font-bold animate-pulse";
+        if (fan) {
+          if (Number(nh3Chuong) >= nguongKhi) {
+            fan.className = "text-amber-500 font-bold animate-pulse ml-1";
             fan.innerText = "ĐANG HÚT KHÍ ĐỘC";
-          } else if (nhietDoChuong >= chuong.nguongNong) {
-            fan.className = "text-rose-600 font-bold animate-pulse";
-            fan.innerText = "ĐANG BẬT (TỐC ĐỘ MAX)";
+          } else if (Number(nhietDoChuong) >= nguongNong) {
+            fan.className = "text-rose-600 font-bold animate-pulse ml-1";
+            fan.innerText = "ĐANG BẬT (MAX)";
           } else {
-            fan.className = "text-emerald-600 font-bold";
-            fan.innerText = "ĐANG BẬT (Duy trì)";
+            fan.className = "text-emerald-400 font-bold ml-1";
+            fan.innerText = "DUY TRÌ MÁT";
           }
-
-          if (nhietDoChuong >= chuong.nguongNong) {
-            mist.className = "text-blue-600 font-bold";
+        }
+        if (mist) {
+          if (Number(nhietDoChuong) >= nguongNong) {
+            mist.className = "text-blue-400 font-bold ml-1";
             mist.innerText = "ĐANG PHUN SƯƠNG";
           } else {
-            mist.className = "text-slate-500";
+            mist.className = "text-slate-500 ml-1";
             mist.innerText = "ĐANG TẮT";
           }
         }
+      }
+    });
 
-        if (sttCool && sttFeed) {
-          if (nhietDoChuong >= chuong.nguongNong) {
-            sttCool.className =
-              "px-2.5 py-1 text-[9px] font-bold bg-rose-50 text-rose-700 rounded-none border border-rose-300 animate-pulse uppercase tracking-widest";
-            sttCool.innerText = "MAX CÔNG SUẤT";
-          } else {
-            sttCool.className =
-              "px-2.5 py-1 text-[9px] font-bold bg-slate-50 text-slate-600 rounded-none border border-slate-300 uppercase tracking-widest";
-            sttCool.innerText = "CHỜ KÍCH HOẠT";
+    // Cập nhật các thẻ KPI Trung bình trên đầu trang Tổng quan
+    if (soChuongCoData > 0) {
+      const tbNhiet = (tongNhiet / soChuongCoData).toFixed(1);
+      const tbAm = (tongAm / soChuongCoData).toFixed(1);
+      const tbNh3 = (tongNh3 / soChuongCoData).toFixed(1);
+
+      const elKpiTemp = document.getElementById("kpi-temp");
+      const elKpiHumid = document.getElementById("kpi-do-am");
+      const elLiveNh3 = document.getElementById("live-nh3");
+
+      if (elKpiTemp) elKpiTemp.innerText = tbNhiet + "°C";
+      if (elKpiHumid) elKpiHumid.innerHTML = tbAm + '<span class="text-lg font-bold text-slate-400 ml-1">%</span>';
+      if (elLiveNh3) elLiveNh3.innerText = tbNh3;
+
+      // Cập nhật dòng trạng thái dưới thẻ KPI Nhiệt độ & Độ ẩm (bỏ chữ Chờ dữ liệu từ Gateway)
+      const tempStatus = document.getElementById("kpi-temp-status");
+      if (tempStatus) {
+        if (Number(tbNhiet) >= 32) {
+          tempStatus.className = "text-[10px] text-rose-600 font-bold mt-2 flex items-center animate-pulse";
+          tempStatus.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> Cảnh báo: Nhiệt độ cao!';
+        } else {
+          tempStatus.className = "text-[10px] text-material-teal font-bold mt-2 flex items-center";
+          tempStatus.innerHTML = '<i class="fa-solid fa-check-circle mr-1"></i> Ngưỡng an toàn lý tưởng';
+        }
+      }
+
+      const humidStatus = document.getElementById("kpi-humid-status");
+      if (humidStatus) {
+        humidStatus.className = "text-[10px] text-material-purple font-bold mt-2 flex items-center";
+        humidStatus.innerHTML = '<i class="fa-solid fa-droplet mr-1"></i> Duy trì mức ổn định';
+      }
+
+      // CẬP NHẬT BIỂU ĐỒ ĐƯỜNG (BIẾN THIÊN MÔI TRƯỜNG) MỖI 3 GIÂY
+      if (typeof mainChart !== "undefined") {
+        const timeString = new Date().toLocaleTimeString("vi-VN", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+
+        mainChart.data.labels.push(timeString);
+        mainChart.data.datasets[0].data.push(Number(tbNhiet));
+        mainChart.data.datasets[1].data.push(Number(tbAm));
+
+        // Giữ tối đa 15 mốc thời gian gần nhất trên biểu đồ
+        if (mainChart.data.labels.length > 15) {
+          mainChart.data.labels.shift();
+          mainChart.data.datasets[0].data.shift();
+          mainChart.data.datasets[1].data.shift();
+        }
+        mainChart.update();
+      }
+
+      // GỌI AI XGBOOST DỰ BÁO THỜI TIẾT 2 GIỜ TỚI DỰA TRÊN NHIỆT ĐỘ & ĐỘ ẨM TRUNG BÌNH
+      try {
+        const currentHour = new Date().getHours();
+        const aiRes = await fetch("/api/predict-weather", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nhiet_do: Number(tbNhiet),
+            do_am: Number(tbAm),
+            gio: currentHour,
+          }),
+        });
+
+        if (aiRes.ok) {
+          const aiData = await aiRes.json();
+
+          // 1. Cập nhật số nhiệt độ dự báo 2h tới
+          const elPredictTemp = document.getElementById("ai-predict-temp");
+          if (elPredictTemp && aiData.predicted_temp !== undefined) {
+            elPredictTemp.innerText = `${aiData.predicted_temp}°C`;
           }
 
-          if (Math.random() > 0.8) {
-            sttFeed.className =
-              "px-2.5 py-1 text-[9px] font-bold bg-amber-50 text-amber-700 rounded-none border border-amber-300 animate-pulse uppercase tracking-widest";
-            sttFeed.innerText = "ĐANG BƠM CÁM";
-          } else {
-            sttFeed.className =
-              "px-2.5 py-1 text-[9px] font-bold bg-emerald-50 text-emerald-700 rounded-none border border-emerald-300 uppercase tracking-widest";
-            sttFeed.innerText = "ĐÃ ĐẦY MÁNG";
+          // 2. Cập nhật lời khuyên của Hệ chuyên gia AI
+          const elActionText = document.getElementById("ai-action-text");
+          if (elActionText && aiData.message) {
+            elActionText.innerText = `"${aiData.message}"`;
+          }
+
+          // 3. Cập nhật các thẻ hành động (Rèm che & Quạt)
+          const elTags = document.getElementById("ai-action-tags");
+          if (elTags) {
+            if (aiData.predicted_temp >= 38.0) {
+              elTags.innerHTML = `
+                <span class="px-2.5 py-1.5 bg-rose-500/10 border border-rose-500/50 text-rose-400 text-[9px] font-bold rounded-none uppercase tracking-wider"><i class="fa-solid fa-triangle-exclamation mr-1"></i> ${aiData.cap_do}</span>
+                <span class="px-2.5 py-1.5 bg-amber-500/10 border border-amber-500/50 text-amber-400 text-[9px] font-bold rounded-none uppercase tracking-wider"><i class="fa-solid fa-person-shelter mr-1"></i> ${aiData.rem_che}</span>
+                <span class="px-2.5 py-1.5 bg-blue-500/10 border border-blue-500/50 text-blue-400 text-[9px] font-bold rounded-none uppercase tracking-wider"><i class="fa-solid fa-fan fa-spin mr-1"></i> ${aiData.quat}</span>
+              `;
+            } else if (aiData.predicted_temp >= 35.0) {
+              elTags.innerHTML = `
+                <span class="px-2.5 py-1.5 bg-amber-500/10 border border-amber-500/50 text-amber-400 text-[9px] font-bold rounded-none uppercase tracking-wider"><i class="fa-solid fa-sun mr-1"></i> ${aiData.cap_do}</span>
+                <span class="px-2.5 py-1.5 bg-cyan-500/10 border border-cyan-500/50 text-cyan-400 text-[9px] font-bold rounded-none uppercase tracking-wider"><i class="fa-solid fa-person-shelter mr-1"></i> ${aiData.rem_che}</span>
+                <span class="px-2.5 py-1.5 bg-blue-500/10 border border-blue-500/50 text-blue-400 text-[9px] font-bold rounded-none uppercase tracking-wider"><i class="fa-solid fa-fan mr-1"></i> ${aiData.quat}</span>
+              `;
+            } else {
+              elTags.innerHTML = `
+                <span class="px-2.5 py-1.5 bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 text-[9px] font-bold rounded-none uppercase tracking-wider"><i class="fa-solid fa-leaf mr-1"></i> ${aiData.cap_do}: ECO TIẾT KIỆM</span>
+                <span class="px-2.5 py-1.5 bg-slate-500/10 border border-slate-500/50 text-slate-300 text-[9px] font-bold rounded-none uppercase tracking-wider">${aiData.rem_che} | ${aiData.quat}</span>
+              `;
+            }
           }
         }
-      });
+      } catch (err) {
+        console.error("Lỗi gọi AI dự báo thời tiết:", err);
+      }
     }
   } catch (error) {
-    console.error("Lỗi khi cập nhật trạng thái chuồng:", error);
+    console.error("Lỗi cập nhật dữ liệu chuồng:", error);
   }
 }, 3000);
 
-// --- HÀM TẠO LOG NHẬT KÝ VẬN HÀNH TỰ ĐỘNG ---
+// Hàm ghi nhật ký hệ thống
 function addSystemLog(message, type = "SYSTEM") {
   const logBox = document.getElementById("system-logs");
   if (!logBox) return;
 
   const now = new Date();
-  const timeStr =
+  const timeStr = // Định dạng thời gian: YYYY-MM-DD HH:MM:SS
     now.getFullYear() +
     "-" +
     String(now.getMonth() + 1).padStart(2, "0") +
@@ -563,7 +716,7 @@ function addSystemLog(message, type = "SYSTEM") {
   if (type === "WARNING") color = "text-rose-500 font-bold";
 
   const newLog = document.createElement("p");
-  newLog.innerHTML = `<span class="text-slate-500">[${timeStr}]</span> <span class="${color}">${type}:</span> ${message}`;
+  newLog.innerHTML = `<span class="text-slate-500">[${timeStr}]</span> <span class="${color}">${type}:</span> ${message}`; // Tạo thẻ <p> mới cho log
 
   logBox.prepend(newLog);
 
@@ -572,9 +725,7 @@ function addSystemLog(message, type = "SYSTEM") {
   }
 }
 
-// ==========================================================================
-// MODULE AI CAMERA: SINH GIAO DIỆN ĐỘNG (DYNAMIC RENDER)
-// ==========================================================================
+// 5. Quản lý AI Camera
 let isMultiAiRunning = false;
 let aiCameras = []; // Mảng động chứa bao nhiêu camera cũng được
 
@@ -589,31 +740,29 @@ function renderAICameraGrid() {
   danhSachChuong.forEach((chuong) => {
     const maCam = chuong.id > 9 ? chuong.id : "0" + chuong.id;
 
-    // Vẽ giao diện cho từng màn hình
     html += `
-            <div class="bg-white rounded-none border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                <div class="bg-slate-900 p-3 flex justify-between items-center border-b-4 border-slate-700">
-                    <span class="px-2 py-1 bg-rose-600 text-white text-[9px] font-black rounded-none animate-pulse tracking-widest uppercase border border-rose-500">■ LIVE REC</span>
-                    <span class="text-emerald-400 text-[10px] font-bold font-mono tracking-widest">CAM_${maCam} / ${chuong.loai.toUpperCase()}</span>
-                </div>
-                <div class="relative bg-black aspect-video overflow-hidden border-b border-slate-200">
-                    <!-- Video tag tự động tạo theo ID chuồng -->
-                    <video id="webcam-${chuong.id}" autoplay playsinline muted class="w-full h-full object-cover opacity-90"></video>
-                    <canvas id="canvas-${chuong.id}" class="absolute top-0 left-0 w-full h-full object-cover pointer-events-none"></canvas>
-                </div>
-                <div class="p-4 grid grid-cols-2 gap-4 bg-slate-50">
-                    <div class="bg-white p-3 rounded-none border border-slate-200 shadow-sm">
-                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Real-time Count</p>
-                        <h4 class="text-2xl font-black text-blue-600 mt-1" id="count-${chuong.id}">0 <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Target</span></h4>
-                    </div>
-                    <div class="bg-white p-3 rounded-none border border-slate-200 shadow-sm">
-                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Health Status</p>
-                        <h4 class="text-xs font-black text-slate-500 mt-2 uppercase tracking-wide" id="status-${chuong.id}">STANDBY...</h4>
-                    </div>
-                </div>
-            </div>
-        `;
-    // Đăng ký camera này vào hệ thống để AI chạy
+      <div class="bg-white rounded-none border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+          <div class="bg-slate-900 p-3 flex justify-between items-center border-b-4 border-slate-700">
+              <span class="px-2 py-1 bg-rose-600 text-white text-[9px] font-black rounded-none animate-pulse tracking-widest uppercase border border-rose-500">■ LIVE REC</span>
+              <span class="text-emerald-400 text-[10px] font-bold font-mono tracking-widest">CAM_${maCam} / ${chuong.loai.toUpperCase()}</span>
+          </div>
+          <div class="relative bg-black aspect-video overflow-hidden border-b border-slate-200">
+              <video id="webcam-${chuong.id}" autoplay playsinline muted class="w-full h-full object-cover opacity-90"></video>
+              <canvas id="canvas-${chuong.id}" class="absolute top-0 left-0 w-full h-full object-cover pointer-events-none"></canvas>
+          </div>
+          <div class="p-4 grid grid-cols-2 gap-4 bg-slate-50">
+              <div class="bg-white p-3 rounded-none border border-slate-200 shadow-sm">
+                  <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Real-time Count</p>
+                  <h4 class="text-2xl font-black text-blue-600 mt-1" id="count-${chuong.id}">0 <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">cá thể</span></h4>
+              </div>
+              <div class="bg-white p-3 rounded-none border border-slate-200 shadow-sm">
+                  <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Health Status</p>
+                  <h4 class="text-xs font-black text-slate-500 mt-2 uppercase tracking-wide" id="status-${chuong.id}">STANDBY...</h4>
+              </div>
+          </div>
+      </div>
+    `;
+    // Thêm biến lastCount để lưu số lượng cá thể đếm được của từng camera
     aiCameras.push({
       id: chuong.id,
       video: null,
@@ -621,54 +770,61 @@ function renderAICameraGrid() {
       ctx: null,
       tracker: [],
       isFetching: false,
+      lastCount: 0,
     });
   });
 
   grid.innerHTML = html;
 
-  // Nếu thêm chuồng khi AI đang bật thì tự động khởi chạy luôn video cho nó
   if (isMultiAiRunning) {
     napVideoChoCacCamera();
   }
 }
-
-// Gọi hàm vẽ ngay khi web load
 renderAICameraGrid();
 
 // 2. Khởi động AI hàng loạt
 async function startMultiCamAI() {
   if (isMultiAiRunning) return;
 
-  document.getElementById("ai-system-status").innerHTML =
-    '<i class="fa-solid fa-spinner fa-spin text-rose-500 mr-1"></i> Đang khởi tạo kết nối đến YOLO Server...';
+  const statusEl = document.getElementById("ai-system-status");
+  if (statusEl) {
+    statusEl.innerHTML =
+      '<i class="fa-solid fa-spinner fa-spin text-rose-500 mr-1"></i> Đang khởi tạo kết nối đến YOLO Server...';
+  }
 
   napVideoChoCacCamera();
 
   isMultiAiRunning = true;
-  document.getElementById("ai-system-status").innerText =
-    "Kết nối YOLO Server thành công. Đang phân tích luồng Video...";
-  document.getElementById("ai-running-badge").classList.remove("hidden");
+  if (statusEl) {
+    statusEl.innerText =
+      "Kết nối YOLO Server thành công. Đang phân tích luồng Video...";
+  }
+  const badgeEl = document.getElementById("ai-running-badge");
+  if (badgeEl) badgeEl.classList.remove("hidden");
 }
 
 // 3. Hàm nạp Video và nổ máy AI cho TẤT CẢ camera đang có
 function napVideoChoCacCamera() {
-  aiCameras.forEach((cam) => {
+  aiCameras.forEach((cam, index) => {
     cam.video = document.getElementById(`webcam-${cam.id}`);
     cam.canvas = document.getElementById(`canvas-${cam.id}`);
+    if (!cam.video || !cam.canvas) return;
+
     cam.ctx = cam.canvas.getContext("2d");
 
-    // Chọn video
-    cam.video.src = cam.id % 2 === 0 ? "video_lon.mp4" : "video_lon.mp4";
+    // Chọn nguồn video (Nếu có video_lon_2.mp4 thì gán cho chuồng chẵn, không thì dùng video_lon.mp4 nhưng tua lệch thời gian để 2 cam đếm khác nhau)
+    cam.video.src = "video_lon.mp4";
     cam.video.loop = true;
     cam.video.muted = true;
-    cam.video.play();
 
-    // SỬA CHÍNH: Chỉ kích hoạt luồng AI sau khi video đã sẵn sàng khung hình!
     cam.video.onloadeddata = () => {
+      // Tua lệch mỗi chuồng 3 giây để các chuồng không bị trùng khung hình
+      cam.video.currentTime = (index * 3) % (cam.video.duration || 10);
+      cam.video.play();
+
       cam.canvas.width = 640;
       cam.canvas.height = 360;
 
-      // Video nạp xong mới cho phép gửi ảnh sang YOLO
       if (!cam.isFetching) {
         cam.isFetching = true;
         fetchYoloData(cam);
@@ -679,9 +835,8 @@ function napVideoChoCacCamera() {
 
 // 4. GIAO TIẾP VỚI YOLO (Dùng chung cho N camera)
 async function fetchYoloData(cam) {
-  if (!isMultiAiRunning) return;
+  if (!isMultiAiRunning || !cam.video) return;
 
-  // An toàn: Đảm bảo video không bị sập giữa chừng thì mới chạy AI
   if (cam.video.readyState < 2) {
     setTimeout(() => {
       requestAnimationFrame(() => fetchYoloData(cam));
@@ -690,14 +845,17 @@ async function fetchYoloData(cam) {
   }
 
   try {
-    // Chuyển hàm chụp ảnh vào trong try-catch, lỡ video lỗi web cũng không chết
     cam.ctx.drawImage(cam.video, 0, 0, cam.canvas.width, cam.canvas.height);
     const frameBase64 = cam.canvas.toDataURL("image/jpeg", 0.7);
 
-    const response = await fetch("http://localhost:8000/api/ai/detect", {
+    // LƯU Ý: Đổi localhost:8000 thành 20.48.3.215:8000 nếu YOLO chạy trên máy ảo Ubuntu
+    const response = await fetch("/api/ai/detect", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image_base64: frameBase64 }),
+      body: JSON.stringify({
+        barn_id: cam.id,
+        image_base64: frameBase64,
+      }),
     });
 
     const result = await response.json();
@@ -707,43 +865,60 @@ async function fetchYoloData(cam) {
       xuLyHanhViVatNuoi(cam, result.data);
     }
   } catch (error) {
-    // Lỗi mạng hoặc lỗi vẽ thì im lặng bỏ qua, chạy tiếp frame sau
+    // Nếu chưa bật server YOLO thì giữ nguyên trạng thái chờ
+    console.error("Lỗi kết nối AI YOLO:", error);
   }
 
-  // Đặt timeout ở cuối cùng để đảm bảo vòng lặp luôn tiếp diễn
   setTimeout(() => {
     requestAnimationFrame(() => fetchYoloData(cam));
   }, 200);
 }
 
+// 5. Xử lý kết quả đếm và đồng bộ lên KPI Tổng đàn
 function xuLyHanhViVatNuoi(cam, yoloData) {
   let currentCount = yoloData.length;
+  cam.lastCount = currentCount; // Lưu lại số lượng của chuồng này
 
   yoloData.forEach((obj) => {
     if (obj.track_id === -1) return;
 
     cam.ctx.lineWidth = 3;
     cam.ctx.font = "bold 14px Inter";
-
-    // Chỉ vẽ khung màu xanh (Bình thường), bỏ logic check idleTime
     cam.ctx.strokeStyle = "#10b981";
     cam.ctx.strokeRect(obj.x, obj.y, obj.width, obj.height);
     cam.ctx.fillStyle = "#10b981";
     cam.ctx.fillText(`ID: ${obj.track_id} (${obj.label})`, obj.x, obj.y - 5);
   });
 
-  document.getElementById(`count-${cam.id}`).innerHTML =
-    `${currentCount} <span class="text-xs text-slate-500 font-medium">cá thể</span>`;
+  // Cập nhật số lượng trên thẻ Camera của chuồng đó
+  const countEl = document.getElementById(`count-${cam.id}`);
+  if (countEl) {
+    countEl.innerHTML = `${currentCount} <span class="text-xs text-slate-500 font-medium">cá thể</span>`;
+  }
 
-  let statusEl = document.getElementById(`status-${cam.id}`);
+  // Cập nhật trạng thái sức khỏe
+  const statusEl = document.getElementById(`status-${cam.id}`);
+  if (statusEl) {
+    if (currentCount === 0) {
+      statusEl.innerText = "Trống chuồng / Đang quét...";
+      statusEl.className = "text-sm font-black text-slate-400 mt-2";
+    } else {
+      statusEl.innerText = "Tracking: Sức khỏe tốt";
+      statusEl.className = "text-sm font-black text-emerald-600 mt-2";
+    }
+  }
 
-  if (currentCount === 0) {
-    statusEl.innerText = "Trống chuồng / Đang quét...";
-    statusEl.className = "text-sm font-black text-slate-400 mt-2";
-  } else {
-    // Ép cứng trạng thái luôn khỏe mạnh
-    statusEl.innerText = "Tracking: Sức khỏe tốt";
-    statusEl.className = "text-sm font-black text-emerald-600 mt-2";
+  // TỰ ĐỘNG CỘNG DỒN TỔNG ĐÀN CỦA TẤT CẢ CÁC CHUỒNG ĐẨY LÊN KPI TRANG CHỦ
+  const tongDanToanTrai = aiCameras.reduce((sum, item) => sum + (item.lastCount || 0), 0);
+  const kpiTongDan = document.getElementById("kpi-tong-dan");
+  const kpiTongDanStatus = document.getElementById("kpi-tong-dan-status");
+
+  if (kpiTongDan) {
+    kpiTongDan.innerText = `${tongDanToanTrai} cá thể`;
+  }
+  if (kpiTongDanStatus) {
+    kpiTongDanStatus.className = "text-[10px] text-material-teal font-bold mt-2 flex items-center";
+    kpiTongDanStatus.innerHTML = `<i class="fa-solid fa-video mr-1.5"></i> Đang đếm trực tiếp từ ${aiCameras.length} Camera AI`;
   }
 }
 
@@ -770,10 +945,10 @@ if (boxCapDien && typeof danhSachChuong !== "undefined") {
   boxCapDien.innerHTML = htmlContent;
 }
 
-// --- HỆ THỐNG CẤP KÊNH CCTV TỰ ĐỘNG ---
+// 6. Render danh sách camera và cho phép chuyển đổi camera
 function renderCameraList() {
   const boxCam = document.getElementById("danh-sach-camera");
-  if (!boxCam || typeof danhSachChuong === "undefined") return;
+  if (!boxCam || typeof danhSachChuong === "undefined") return; // Nếu không có boxCam hoặc danhSachChuong chưa được định nghĩa thì thoát hàm
 
   let html = "";
   danhSachChuong.forEach((chuong, index) => {
@@ -846,7 +1021,7 @@ function switchCamera(id, loai) {
 
 renderCameraList();
 
-// HỆ THỐNG ĐỒNG BỘ TÀI KHOẢN
+// 7. Đồng bộ thông tin tài khoản Admin
 async function dongBoTaiKhoanAdmin() {
   const userData = localStorage.getItem("currentUser");
 
@@ -888,8 +1063,18 @@ function dongModalProfile() {
   document.getElementById("profile-modal").classList.add("hidden");
 }
 
-// KÍCH HOẠT CHẠY NGAY LÚC LOAD TRANG ĐỂ LẤY DATA
+// Đồng bộ thông tin tài khoản Admin khi load trang
 dongBoTaiKhoanAdmin();
+
+// Thêm vào script_2.js
+function dangXuat() {
+    if(confirm("Bạn có chắc chắn muốn thoát khỏi hệ thống?")) {
+        // Xóa thông tin đăng nhập trong bộ nhớ
+        localStorage.removeItem("currentUser");
+        // Chuyển hướng về trang đăng nhập
+        window.location.href = "index.html";
+    }
+}
 
 // 1. Biến toàn cục để ghi nhớ trạng thái quạt hiện tại (tránh spam lệnh)
 let trangThaiQuatHienTai = "OFF";
@@ -933,8 +1118,9 @@ function kiemTraVaDieuKhienQuat(nhietDoThucTe, khiThai) {
       });
   }
 }
-const socket = io("http://localhost:3000");
+/*const socket = io("http://localhost:3000");
 
+// Lắng nghe sự kiện "cap_nhat_giao_dien" từ server
 socket.on("cap_nhat_giao_dien", function(data) {
     console.log("Dữ liệu cảm biến vừa nhảy:", data);
     // Cập nhật Nhiệt độ (giữ chữ °C)
@@ -1013,4 +1199,138 @@ socket.on("cap_nhat_giao_dien", function(data) {
     if (data.message) {
         document.getElementById("ai-action-text").innerText = `"${data.message}"`;
     }
+
+    // ==============================================================
+// [CẬP NHẬT LUỒNG THẬT VÀO VẬN HÀNH NHANH]
+// ==============================================================
+if (data.nhiet_do && data.do_am && typeof danhSachChuong !== "undefined") {
+    danhSachChuong.forEach((chuong) => {
+        // Tính toán lại độ lệch nhiệt độ/độ ẩm/khí NH3 y hệt như logic ở trên
+        const nhietDoChuong = (parseFloat(data.nhiet_do) + chuong.lechNhietDo).toFixed(1);
+        const humidChuong = Math.min(100, Math.max(0, parseInt(data.do_am) + (chuong.id === 2 ? 4 : 0)));
+        // Lấy NH3 thực tế (nếu có, không thì random tạm theo nhiệt độ để test)
+        const nh3ThucTe = data.nh3 ? data.nh3 : (data.nhiet_do > 30 ? 15 : 8); 
+        const nh3Chuong = parseInt(nh3ThucTe) + chuong.lechNh3;
+
+        // Truy xuất DOM theo ID (ví dụ: vh-temp-1, vh-temp-2)
+        const txtVHTemp = document.getElementById(`vh-temp-${chuong.id}`);
+        const txtVHHumid = document.getElementById(`vh-humid-${chuong.id}`);
+        const txtVHNh3 = document.getElementById(`vh-nh3-${chuong.id}`);
+
+        // Kiểm tra DOM có tồn tại không rồi mới cập nhật dữ liệu Real-time
+        if (txtVHTemp) {
+            txtVHTemp.innerText = nhietDoChuong + "°C";
+            // Đổi màu cảnh báo nếu quá nóng
+            if (nhietDoChuong >= chuong.nguongNong) {
+                txtVHTemp.classList.replace("text-material-pink", "text-rose-600");
+                txtVHTemp.classList.add("animate-pulse");
+            } else {
+                txtVHTemp.classList.replace("text-rose-600", "text-material-pink");
+                txtVHTemp.classList.remove("animate-pulse");
+            }
+        }
+        
+        if (txtVHHumid) {
+            txtVHHumid.innerText = humidChuong + "%";
+        }
+        
+        if (txtVHNh3) {
+            txtVHNh3.innerText = nh3Chuong + " ppm";
+            // Cảnh báo khí độc
+            if (nh3Chuong >= chuong.nguongNh3) {
+                txtVHNh3.classList.replace("text-material-orange", "text-rose-600");
+                txtVHNh3.classList.add("animate-pulse");
+            } else {
+                txtVHNh3.classList.replace("text-rose-600", "text-material-orange");
+                txtVHNh3.classList.remove("animate-pulse");
+            }
+        }
+    });
+}
 });
+
+// ==========================================
+// A. CẬP NHẬT CHỈ SỐ MÔI TRƯỜNG LIÊN TỤC
+// ==========================================
+socket.on('sensor-data', (data) => {
+    /* Format dữ liệu kỳ vọng từ Backend: 
+       { nh3: 18.5, fanActive: 3, fanTotal: 4 } 
+    */
+    
+    // 1. Cập nhật con số NH3
+    /*const nh3Element = document.getElementById('live-nh3');
+    if (nh3Element) nh3Element.innerText = data.nh3.toFixed(1);
+    
+    // 2. Cập nhật chữ Quạt gió
+    const fanElement = document.getElementById('live-fan-count');
+    if (fanElement) fanElement.innerText = `${data.fanActive}/${data.fanTotal}`;
+    
+    // 3. Đổi màu Badge Cảnh báo tự động theo Ngưỡng
+    const nh3Badge = document.getElementById('nh3-badge');
+    if (nh3Badge) {
+        if (data.nh3 >= 20) {
+            // Nguy hiểm (Màu Đỏ/Pink)
+            nh3Badge.className = 'text-[10px] font-bold bg-material-pink/10 text-material-pink px-2 py-0.5 rounded border border-material-pink/20';
+            nh3Badge.innerText = 'NGUY HIỂM';
+        } else if (data.nh3 >= 10) {
+            // Cảnh báo (Màu Cam)
+            nh3Badge.className = 'text-[10px] font-bold bg-material-orange/10 text-material-orange px-2 py-0.5 rounded border border-material-orange/20';
+            nh3Badge.innerText = 'CẢNH BÁO NHẸ';
+        } else {
+            // An toàn (Màu Xanh Teal)
+            nh3Badge.className = 'text-[10px] font-bold bg-material-teal/10 text-material-teal px-2 py-0.5 rounded border border-material-teal/20';
+            nh3Badge.innerText = 'AN TOÀN';
+        }
+    }
+});
+
+
+// ==========================================
+// B. BẮT SỰ KIỆN CẢNH BÁO / LỖI MỚI NHẤT
+// ==========================================
+socket.on('system-alert', (alert) => {
+    /* Format dữ liệu kỳ vọng từ Backend: 
+       { type: 'error', title: 'Quạt hỏng', time: 'Vừa xong', message: 'Mất kết nối...' } 
+    */
+    
+    /*const alertList = document.getElementById('alert-list');
+    if (!alertList) return;
+
+    // Phân loại Icon và Màu sắc dựa vào type
+    let iconHtml = '';
+    if (alert.type === 'error') {
+        iconHtml = `<div class="bg-material-pink/10 p-2 rounded-full mt-1"><i class="fa-solid fa-fire text-material-pink text-sm w-4 text-center"></i></div>`;
+    } else if (alert.type === 'ai') {
+        iconHtml = `<div class="bg-material-purple/10 p-2 rounded-full mt-1"><i class="fa-solid fa-eye text-material-purple text-sm w-4 text-center"></i></div>`;
+    } else {
+        iconHtml = `<div class="bg-material-teal/10 p-2 rounded-full mt-1"><i class="fa-solid fa-check text-material-teal text-sm w-4 text-center"></i></div>`;
+    }
+
+    // Tạo khối HTML (Thẻ <li>) mới
+    const newLi = document.createElement('li');
+    // Thêm class animate-pulse (nhấp nháy) và viền để làm nổi bật cảnh báo mới
+    newLi.className = 'p-4 hover:bg-gray-50 transition-colors flex items-start space-x-4 bg-yellow-50/50 border-l-4 border-material-orange transition-all duration-500';
+    newLi.innerHTML = `
+        ${iconHtml}
+        <div class="flex-1">
+            <div class="flex justify-between items-center mb-1">
+                <h4 class="text-xs font-bold text-gray-800">${alert.title}</h4>
+                <span class="text-[10px] text-gray-400 font-mono">${alert.time}</span>
+            </div>
+            <p class="text-[11px] text-gray-500 line-clamp-1">${alert.message}</p>
+        </div>
+    `;
+
+    // Nhét cảnh báo mới lên ĐẦU danh sách
+    alertList.prepend(newLi);
+
+    // Chặn độ dài danh sách (Nếu > 4 dòng thì xóa dòng cũ nhất ở dưới cùng)
+    if (alertList.children.length > 4) {
+        alertList.lastElementChild.remove();
+    }
+    
+    // Tự động tắt hiệu ứng nhấp nháy/nhấn mạnh sau 5 giây
+    setTimeout(() => {
+        newLi.classList.remove('bg-yellow-50/50', 'border-l-4', 'border-material-orange');
+    }, 5000);
+});*/

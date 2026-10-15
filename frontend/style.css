@@ -21,8 +21,9 @@ body {
     background: #94a3b8;
 }
 
+/* Sửa lại trong file style.css */
 .active-menu {
-    background-color: #1e293b;
     color: #38bdf8;
     border-left: 4px solid #38bdf8;
+    /* ĐÃ XÓA: background-color: #1e293b; */
 }

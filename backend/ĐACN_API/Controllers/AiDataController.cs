@@ -16,6 +16,7 @@ namespace DACN_API.Controllers
             _context = context;
         }
 
+        // GET: api/ai/data
         [HttpGet("history")]
         public async Task<IActionResult> GetAiHistory()
         {

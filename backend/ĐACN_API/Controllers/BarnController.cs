@@ -16,7 +16,7 @@ namespace DACN_API.Controllers
             _context = context;
         }
 
-        // 1. LẤY DANH SÁCH CHUỒNG (R - Read)
+        // Lấy danh sách tất cả các chuồng
         [HttpGet]
         public async Task<IActionResult> GetBarns()
         {
@@ -24,7 +24,7 @@ namespace DACN_API.Controllers
             return Ok(barns);
         }
 
-        // 2. THÊM CHUỒNG MỚI (C - Create)
+        // Tạo một chuồng mới
         [HttpPost]
         public async Task<IActionResult> AddBarn(Barn barn)
         {
@@ -33,7 +33,7 @@ namespace DACN_API.Controllers
             return Ok(barn);
         }
 
-        // 3. CẬP NHẬT CHUỒNG (U - Update)
+        // Cập nhật thông tin của một chuồng
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateBarn(int id, Barn barn)
         {
@@ -44,7 +44,7 @@ namespace DACN_API.Controllers
             return Ok(barn);
         }
 
-        // 4. XÓA CHUỒNG (D - Delete)
+        // Xóa một chuồng
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBarn(int id)
         {

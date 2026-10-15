@@ -15,6 +15,7 @@ namespace DACN_API.Controllers
             _context = context;
         }
 
+        // POST: api/Auth/login
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {

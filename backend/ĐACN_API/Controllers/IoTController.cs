@@ -36,10 +36,10 @@ namespace DACN_API.Controllers
             return Ok(new { message = "Data saved successfully!" });
         }
 
-        [HttpGet("ai-predict")] // CHÚ Ý: Bắt buộc phải có dòng này để tạo URL API
+        [HttpGet("ai-predict")] 
         public async Task<IActionResult> GetAIPrediction()
         {
-            // 1. LẤY DỮ LIỆU THẬT MỚI NHẤT TỪ MYSQL (thay vì gán số ảo)
+            // 1. Lấy dữ liệu cảm biến mới nhất từ cơ sở dữ liệu
             var latestData = await _context.SensorMetrics
                 .OrderByDescending(s => s.RecordedAt)
                 .FirstOrDefaultAsync();
@@ -52,9 +52,9 @@ namespace DACN_API.Controllers
             // Lấy thông số thực tế đóng gói lại
             var currentData = new
             {
-                nhiet_do = latestData.Temperature, // Tên biến này tùy thuộc vào Model của ông nhé
+                nhiet_do = latestData.Temperature, 
                 do_am = latestData.Humidity,
-                gio = DateTime.Now.Hour // Lấy đúng giờ thực tế của hệ thống
+                gio = DateTime.Now.Hour 
             };
 
             var jsonContent = new StringContent(JsonSerializer.Serialize(currentData), Encoding.UTF8, "application/json");
@@ -80,12 +80,14 @@ namespace DACN_API.Controllers
         [HttpGet("api/sensors/latest")]
         public async Task<IActionResult> GetLatestSensorData()
         {
+            // 1. Lấy dữ liệu cảm biến mới nhất từ cơ sở dữ liệu
             var latestData = await _context.SensorMetrics
                 .OrderByDescending(s => s.RecordedAt)
                 .FirstOrDefaultAsync();
 
             if (latestData == null)
             {
+                // Nếu không có dữ liệu, trả về dữ liệu mặc định
                 return Ok(new { temperature = 27.5, humidity = 65, nh3 = 10 });
             }
 

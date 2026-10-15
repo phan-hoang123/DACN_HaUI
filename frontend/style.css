@@ -36,3 +36,36 @@ body {
     color: #38bdf8;
     border-left: 4px solid #38bdf8;
 }
+
+/* TỐI ƯU RIÊNG CHO MÀN HÌNH ĐIỆN THOẠI (DƯỚI 640PX) */
+@media (max-width: 640px) {
+    /* Thu gọn tiêu đề chính của từng Tab */
+    main h2.text-lg {
+        font-size: 1.05rem !important;
+        line-height: 1.4rem !important;
+    }
+
+    /* Đảm bảo các con số chỉ số cảm biến không bao giờ bị tràn khung hay rớt dòng */
+    #luoi-the-cam-bien [id$="-temp"],
+    #luoi-the-cam-bien [id$="-humid"],
+    #luoi-the-cam-bien [id$="-nh3"] {
+        font-size: 0.95rem !important;
+        line-height: 1.25rem !important;
+        white-space: nowrap !important;
+        letter-spacing: -0.02em;
+    }
+
+    /* Thu nhỏ gọn chữ trong 4 thẻ KPI trang Tổng quan */
+    #kpi-tong-dan,
+    #kpi-temp,
+    #kpi-do-am,
+    #ai-predict-temp {
+        font-size: 1.15rem !important;
+        line-height: 1.5rem !important;
+    }
+
+    /* Thu gọn các thẻ trong mục Vận hành nhanh */
+    #danh-sach-van-hanh-nhanh > div {
+        padding: 0.65rem !important;
+    }
+}

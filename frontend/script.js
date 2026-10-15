@@ -212,34 +212,45 @@ function renderGiaoDienChuongTrai() {
         </tr>
     `;
 
-    // 2. Vẽ thẻ cho Tab Giám Sát Cảm Biến
+    // 2. Vẽ thẻ cho Tab Giám Sát Cảm Biến (Tối ưu hiển thị gọn đẹp trên cả Điện thoại & PC)
     htmlCamBien += `
-        <div class="bg-white p-6 rounded-none border border-slate-200 shadow-sm space-y-5 hover:border-${mauChuDao}-400 transition-colors">
-            <div class="flex justify-between items-center border-b-2 border-slate-200 pb-3">
-                <h3 class="text-sm font-black text-slate-800 flex items-center uppercase tracking-wider">
-                    <i class="fa-solid fa-microchip mr-2 text-${mauChuDao}-600"></i>NODE ${maChuong} / ${chuong.loai}
+        <div class="bg-white p-3.5 sm:p-6 rounded-lg sm:rounded-none border border-slate-200 shadow-sm space-y-3 sm:space-y-5 hover:border-${mauChuDao}-400 transition-colors">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-2.5 sm:pb-3 gap-2">
+                <h3 class="text-xs sm:text-sm font-black text-slate-800 flex items-center uppercase tracking-wide truncate">
+                    <i class="fa-solid fa-microchip mr-1.5 sm:mr-2 text-${mauChuDao}-600 shrink-0"></i>
+                    <span class="truncate">NODE ${maChuong} / ${chuong.loai}</span>
                 </h3>
-                <span class="px-2 py-1 bg-green-50 text-green-700 border border-green-300 text-[9px] font-bold rounded-none uppercase tracking-widest flex items-center"><span class="w-1.5 h-1.5 inline-block bg-green-500 mr-1.5 animate-pulse rounded-none"></span>Live</span>
+                <span class="px-2 py-0.5 sm:py-1 bg-green-50 text-green-700 border border-green-300 text-[8px] sm:text-[9px] font-bold rounded uppercase tracking-widest flex items-center shrink-0">
+                    <span class="w-1.5 h-1.5 inline-block bg-green-500 mr-1 animate-pulse rounded-full"></span>Live
+                </span>
             </div>
-            <div class="grid grid-cols-3 gap-4">
-                <div class="bg-slate-50 p-4 rounded-none text-center border border-slate-200 shadow-inner">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Nhiệt Độ</p>
-                    <p class="text-2xl font-black text-rose-600 mt-2" id="c${chuong.id}-temp">--°C</p>
+            <div class="grid grid-cols-3 gap-2 sm:gap-4">
+                <div class="bg-slate-50 p-2 sm:p-4 rounded text-center border border-slate-200 shadow-inner flex flex-col justify-center">
+                    <p class="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">Nhiệt Độ</p>
+                    <p class="text-sm sm:text-2xl font-black text-rose-600 mt-1 sm:mt-2 whitespace-nowrap" id="c${chuong.id}-temp">--°C</p>
                 </div>
-                <div class="bg-slate-50 p-4 rounded-none text-center border border-slate-200 shadow-inner">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Độ Ẩm</p>
-                    <p class="text-2xl font-black text-blue-600 mt-2" id="c${chuong.id}-humid">--%</p>
+                <div class="bg-slate-50 p-2 sm:p-4 rounded text-center border border-slate-200 shadow-inner flex flex-col justify-center">
+                    <p class="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">Độ Ẩm</p>
+                    <p class="text-sm sm:text-2xl font-black text-blue-600 mt-1 sm:mt-2 whitespace-nowrap" id="c${chuong.id}-humid">--%</p>
                 </div>
-                <div class="bg-slate-50 p-4 rounded-none text-center border border-slate-200 shadow-inner">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Khí NH3</p>
-                    <p class="text-2xl font-black text-amber-600 mt-2" id="c${chuong.id}-nh3">-- ppm</p>
+                <div class="bg-slate-50 p-2 sm:p-4 rounded text-center border border-slate-200 shadow-inner flex flex-col justify-center">
+                    <p class="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">Khí NH3</p>
+                    <p class="text-sm sm:text-2xl font-black text-amber-600 mt-1 sm:mt-2 whitespace-nowrap" id="c${chuong.id}-nh3">-- ppm</p>
                 </div>
             </div>
-            <div class="p-4 bg-slate-900 rounded-none border border-slate-800 text-sm space-y-2 mt-2 shadow-inner">
-                <h4 class="font-bold text-slate-400 uppercase tracking-widest text-[10px] mb-3"><i class="fa-solid fa-gears mr-1.5"></i>Trạng thái Tự Động Hóa:</h4>
-                <div class="flex justify-between text-[11px] text-slate-300 border-t border-slate-700 pt-3 font-mono">
-                    <span>Quạt thông gió: <b id="device-fan-${chuong.id}" class="text-emerald-400 ml-1">...</b></span>
-                    <span>Làm mát: <b id="device-mist-${chuong.id}" class="text-blue-400 ml-1">...</b></span>
+            <div class="p-3 sm:p-4 bg-slate-900 rounded border border-slate-800 text-xs space-y-1.5 sm:space-y-2 shadow-inner">
+                <h4 class="font-bold text-slate-400 uppercase tracking-wider text-[9px] sm:text-[10px] mb-1.5 sm:mb-2 flex items-center">
+                    <i class="fa-solid fa-gears mr-1.5"></i>Trạng thái Tự Động Hóa:
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] text-slate-300 border-t border-slate-700 pt-2 sm:pt-3 font-mono">
+                    <div class="flex justify-between sm:justify-start items-center">
+                        <span class="text-slate-400">Quạt thông gió:</span>
+                        <b id="device-fan-${chuong.id}" class="text-emerald-400 ml-1 truncate">...</b>
+                    </div>
+                    <div class="flex justify-between sm:justify-start items-center">
+                        <span class="text-slate-400">Làm mát:</span>
+                        <b id="device-mist-${chuong.id}" class="text-blue-400 ml-1 truncate">...</b>
+                    </div>
                 </div>
             </div>
         </div>
@@ -741,23 +752,23 @@ function renderAICameraGrid() {
     const maCam = chuong.id > 9 ? chuong.id : "0" + chuong.id;
 
     html += `
-      <div class="bg-white rounded-none border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-          <div class="bg-slate-900 p-3 flex justify-between items-center border-b-4 border-slate-700">
-              <span class="px-2 py-1 bg-rose-600 text-white text-[9px] font-black rounded-none animate-pulse tracking-widest uppercase border border-rose-500">■ LIVE REC</span>
-              <span class="text-emerald-400 text-[10px] font-bold font-mono tracking-widest">CAM_${maCam} / ${chuong.loai.toUpperCase()}</span>
+      <div class="bg-white rounded-lg sm:rounded-none border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+          <div class="bg-slate-900 px-3 py-2 sm:p-3 flex justify-between items-center border-b-2 sm:border-b-4 border-slate-700">
+              <span class="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-rose-600 text-white text-[8px] sm:text-[9px] font-black rounded-none animate-pulse tracking-widest uppercase border border-rose-500">■ LIVE REC</span>
+              <span class="text-emerald-400 text-[9px] sm:text-[10px] font-bold font-mono tracking-wider truncate ml-2">CAM_${maCam} / ${chuong.loai.toUpperCase()}</span>
           </div>
           <div class="relative bg-black aspect-video overflow-hidden border-b border-slate-200">
               <video id="webcam-${chuong.id}" autoplay playsinline muted class="w-full h-full object-cover opacity-90"></video>
               <canvas id="canvas-${chuong.id}" class="absolute top-0 left-0 w-full h-full object-cover pointer-events-none"></canvas>
           </div>
-          <div class="p-4 grid grid-cols-2 gap-4 bg-slate-50">
-              <div class="bg-white p-3 rounded-none border border-slate-200 shadow-sm">
-                  <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Real-time Count</p>
-                  <h4 class="text-2xl font-black text-blue-600 mt-1" id="count-${chuong.id}">0 <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">cá thể</span></h4>
+          <div class="p-2.5 sm:p-4 grid grid-cols-2 gap-2.5 sm:gap-4 bg-slate-50">
+              <div class="bg-white p-2.5 sm:p-3 rounded border border-slate-200 shadow-sm">
+                  <p class="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider">Real-time Count</p>
+                  <h4 class="text-base sm:text-2xl font-black text-blue-600 mt-0.5 sm:mt-1 whitespace-nowrap" id="count-${chuong.id}">0 <span class="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase">cá thể</span></h4>
               </div>
-              <div class="bg-white p-3 rounded-none border border-slate-200 shadow-sm">
-                  <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Health Status</p>
-                  <h4 class="text-xs font-black text-slate-500 mt-2 uppercase tracking-wide" id="status-${chuong.id}">STANDBY...</h4>
+              <div class="bg-white p-2.5 sm:p-3 rounded border border-slate-200 shadow-sm">
+                  <p class="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider">Health Status</p>
+                  <h4 class="text-[11px] sm:text-xs font-black text-slate-500 mt-1 sm:mt-2 uppercase tracking-wide truncate" id="status-${chuong.id}">STANDBY...</h4>
               </div>
           </div>
       </div>

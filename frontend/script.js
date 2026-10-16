@@ -572,8 +572,8 @@ function dayCanhBaoTrangChu(loai, tieuDe, noiDung) {
 
   alertList.prepend(newLi);
 
-  // Giữ tối đa 5 cảnh báo mới nhất trên Trang chủ cho gọn đẹp
-  while (alertList.children.length > 5) {
+  // Giữ tối đa 4 cảnh báo mới nhất trên Trang chủ cho gọn đẹp
+  while (alertList.children.length > 4) {
     alertList.lastElementChild.remove();
   }
 }
@@ -630,6 +630,7 @@ setInterval(async () => {
 
     let tongNhiet = 0, tongAm = 0, tongNh3 = 0, soChuongCoData = 0;
     let soQuatDangBat = 0;
+    let soBomDangBat = 0;
 
     barnsData.forEach((chuong) => {
       const rawTemp = chuong.nhietDoHienTai ?? chuong.NhietDoHienTai;
@@ -662,6 +663,7 @@ setInterval(async () => {
         const isBomPhunSuongBat = isQuaNong;
 
         if (isQuatBat) soQuatDangBat++;
+        if (isBomPhunSuongBat) soBomDangBat++;
 
         // --- KIỂM TRA CHUYỂN TRẠNG THÁI ĐỂ BẮN CẢNH BÁO & GHI NHẬT KÝ THẬT (KHÔNG SPAM) ---
         if (!trangThaiChuong[chuong.id]) {
@@ -839,6 +841,10 @@ setInterval(async () => {
       // Cập nhật số lượng Quạt đang hoạt động thực tế (thay cho số 2/4 cứng)
       if (elLiveFanCount) {
         elLiveFanCount.innerText = `${soQuatDangBat}/${barnsData.length}`;
+      }
+      const elLiveMistCount = document.getElementById("live-mist-count");
+      if (elLiveMistCount) {
+        elLiveMistCount.innerText = `${soBomDangBat}/${barnsData.length}`;
       }
 
       // Cập nhật Badge đánh giá mức độ khí NH3 thực tế

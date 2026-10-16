@@ -267,66 +267,31 @@
                 </div> <!-- KẾT THÚC HÀNG 2 -->
 
                 <!-- HÀNG 3: CẢNH BÁO NHANH & CHỈ SỐ MÔI TRƯỜNG -->
-                <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 items-stretch">
                     
                     <!-- Bảng Cảnh báo & Sự kiện -->
-                    <div class="xl:col-span-2 bg-white rounded shadow-card overflow-hidden border border-gray-100">
-                        <div class="bg-gray-50 px-4 sm:px-5 py-3 border-b border-gray-200 flex justify-between items-center">
+                    <div class="xl:col-span-2 bg-white rounded shadow-card overflow-hidden border border-gray-100 flex flex-col">
+                        <div class="bg-gray-50 px-4 sm:px-5 py-3 border-b border-gray-200 flex justify-between items-center shrink-0">
                             <h6 class="font-bold text-xs sm:text-sm text-material-pink uppercase tracking-wide"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Cảnh Báo Hệ Thống</h6>
                             <a href="#" onclick="switchTab('nhat-ky')" class="text-[10px] font-bold text-material-purple hover:underline uppercase tracking-wider">Xem tất cả <i class="fa-solid fa-angle-right ml-1"></i></a>
                         </div>
-                        <div class="p-0">
+                        <div class="p-0 flex-1 overflow-y-auto max-h-[315px]">
                             <ul class="divide-y divide-gray-100" id="alert-list">
-                                <li class="p-3.5 sm:p-4 hover:bg-gray-50 transition-colors flex items-start space-x-3 sm:space-x-4">
-                                    <div class="bg-material-pink/10 p-2 rounded-full mt-0.5 shrink-0">
-                                        <i class="fa-solid fa-fire text-material-pink text-sm w-4 text-center"></i>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="flex justify-between items-center mb-1 gap-2">
-                                            <h4 class="text-xs font-bold text-gray-800 truncate">Cảnh báo Nhiệt độ - CHUONG-04</h4>
-                                            <span class="text-[10px] text-gray-400 font-mono shrink-0">10 phút trước</span>
-                                        </div>
-                                        <p class="text-[11px] text-gray-500 line-clamp-2 sm:line-clamp-1">Nhiệt độ đo được (31.2°C) vượt ngưỡng cài đặt (30°C). Hệ thống đã tự động kích hoạt 2 quạt hút.</p>
-                                    </div>
-                                </li>
-                                <li class="p-3.5 sm:p-4 hover:bg-gray-50 transition-colors flex items-start space-x-3 sm:space-x-4">
-                                    <div class="bg-material-purple/10 p-2 rounded-full mt-0.5 shrink-0">
-                                        <i class="fa-solid fa-eye text-material-purple text-sm w-4 text-center"></i>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="flex justify-between items-center mb-1 gap-2">
-                                            <h4 class="text-xs font-bold text-gray-800 truncate">AI Vision: Phát hiện bất thường</h4>
-                                            <span class="text-[10px] text-gray-400 font-mono shrink-0">25 phút trước</span>
-                                        </div>
-                                        <p class="text-[11px] text-gray-500 line-clamp-2 sm:line-clamp-1">YOLOv8 phát hiện mật độ đàn tụm lại bất thường tại góc trái CHUONG-03. Có khả năng heo bị lạnh.</p>
-                                    </div>
-                                </li>
-                                <li class="p-3.5 sm:p-4 hover:bg-gray-50 transition-colors flex items-start space-x-3 sm:space-x-4">
-                                    <div class="bg-material-teal/10 p-2 rounded-full mt-0.5 shrink-0">
-                                        <i class="fa-solid fa-check text-material-teal text-sm w-4 text-center"></i>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="flex justify-between items-center mb-1 gap-2">
-                                            <h4 class="text-xs font-bold text-gray-800 truncate">Hoàn tất chu trình đồng bộ</h4>
-                                            <span class="text-[10px] text-gray-400 font-mono shrink-0">1 giờ trước</span>
-                                        </div>
-                                        <p class="text-[11px] text-gray-500 line-clamp-2 sm:line-clamp-1">Gateway đã sao lưu thành công 12,040 bản ghi dữ liệu cảm biến lên Server Trung tâm.</p>
-                                    </div>
-                                </li>
+                                <!-- JS sẽ tự động đẩy tối đa 4 cảnh báo thời gian thực vào đây -->
                             </ul>
                         </div>
                     </div>
 
-                    <!-- Khối Chỉ số Môi trường -->
+                    <!-- Khối Chỉ số Môi trường (3 thẻ xếp đều không còn khoảng trống) -->
                     <div class="bg-white rounded shadow-card overflow-hidden border border-gray-100 flex flex-col">
-                        <div class="bg-gray-50 px-4 sm:px-5 py-3 border-b border-gray-200">
+                        <div class="bg-gray-50 px-4 sm:px-5 py-3 border-b border-gray-200 shrink-0">
                             <h6 class="font-bold text-xs sm:text-sm text-gray-700 uppercase tracking-wide"><i class="fa-solid fa-leaf mr-2 text-material-teal"></i>Đánh Giá Môi Trường</h6>
                         </div>
-                        <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between">
+                        <div class="p-4 sm:p-5 flex-1 flex flex-col justify-center space-y-3">
                             
-                            <!-- Chỉ số Khí Độc (NH3) -->
-                            <div class="bg-gray-50 p-3.5 sm:p-4 rounded-lg border border-gray-200 mb-3 sm:mb-4">
-                                <div class="flex justify-between items-center mb-2">
+                            <!-- 1. Chỉ số Khí Độc (NH3) -->
+                            <div class="bg-gray-50 p-3.5 rounded-lg border border-gray-200">
+                                <div class="flex justify-between items-center mb-1.5">
                                     <h4 class="text-xs font-bold text-gray-600 uppercase">Mức độ Khí NH3</h4>
                                     <span id="nh3-badge" class="text-[10px] font-bold bg-material-orange/10 text-material-orange px-2 py-0.5 rounded border border-material-orange/20">CẢNH BÁO NHẸ</span>
                                 </div>
@@ -334,7 +299,7 @@
                                     <span id="live-nh3" class="text-2xl sm:text-3xl font-black text-gray-800">14.2</span>
                                     <span class="text-xs sm:text-sm font-bold text-gray-400 mb-1">ppm</span>
                                 </div>
-                                <div class="w-full bg-gray-200 rounded-full h-1.5 mt-3 overflow-hidden flex">
+                                <div class="w-full bg-gray-200 rounded-full h-1.5 mt-2.5 overflow-hidden flex">
                                     <div class="bg-material-teal h-1.5 rounded-l-full" style="width: 30%"></div>
                                     <div class="bg-material-orange h-1.5" style="width: 50%"></div>
                                     <div class="bg-gray-300 h-1.5 rounded-r-full" style="width: 20%"></div>
@@ -345,15 +310,32 @@
                                 </div>
                             </div>
 
-                            <!-- Trạng thái Hệ thống Thông gió -->
-                            <div class="flex items-center p-3.5 sm:p-4 rounded-lg border border-material-purple/20 bg-material-purple/5">
-                                <div class="w-10 h-10 rounded-full bg-white border border-material-purple/20 flex items-center justify-center mr-3 shadow-sm shrink-0">
-                                    <i class="fa-solid fa-fan text-material-purple animate-spin" style="animation-duration: 3s;"></i>
+                            <!-- 2. Trạng thái Hệ thống Thông gió (Quạt 12V) -->
+                            <div class="flex items-center justify-between p-3 rounded-lg border border-material-purple/20 bg-material-purple/5">
+                                <div class="flex items-center">
+                                    <div class="w-9 h-9 rounded-full bg-white border border-material-purple/20 flex items-center justify-center mr-3 shadow-sm shrink-0">
+                                        <i class="fa-solid fa-fan text-material-purple animate-spin" style="animation-duration: 3s;"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-bold text-material-purple uppercase">Hệ Thống Thông Gió</h4>
+                                        <p class="text-[10px] text-gray-600 font-medium mt-0.5"><span id="live-fan-count" class="font-bold text-gray-800">0/4</span> Quạt đang hoạt động</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h4 class="text-xs font-bold text-material-purple uppercase">Hệ Thống Thông Gió</h4>
-                                    <p class="text-[10px] text-gray-600 font-medium mt-0.5"><span id="live-fan-count" class="font-bold text-gray-800">2/4</span> Quạt đang hoạt động</p>
+                                <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-white text-material-purple border border-material-purple/20 uppercase">Relay K1</span>
+                            </div>
+
+                            <!-- 3. Trạng thái Hệ thống Phun sương (Máy bơm 12V) -->
+                            <div class="flex items-center justify-between p-3 rounded-lg border border-material-teal/25 bg-material-teal/5">
+                                <div class="flex items-center">
+                                    <div class="w-9 h-9 rounded-full bg-white border border-material-teal/25 flex items-center justify-center mr-3 shadow-sm shrink-0">
+                                        <i class="fa-solid fa-droplet text-material-teal animate-bounce"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-bold text-material-teal uppercase">Hệ Thống Phun Sương</h4>
+                                        <p class="text-[10px] text-gray-600 font-medium mt-0.5"><span id="live-mist-count" class="font-bold text-gray-800">0/4</span> Bơm đang làm mát</p>
+                                    </div>
                                 </div>
+                                <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-white text-material-teal border border-material-teal/25 uppercase">Relay K2</span>
                             </div>
 
                         </div>

@@ -864,7 +864,7 @@ async function fetchYoloData(cam) {
   // --- TRƯỜNG HỢP 1: CHUỒNG 1 (CAM 01) LẤY HÌNH ẢNH TRỰC TIẾP TỪ CAMERA EZVIZ ---
   if (cam.id === 1) {
     try {
-      const response = await fetch(`/api/ai/ezviz/1?t=${Date.now()}`); // Gọi chuẩn phương thức GET
+      const response = await fetch(`/api/ai/ezviz/1`); // Gọi chuẩn phương thức GET
       const result = await response.json();
 
       if (result.status === "success" && result.frame_base64) {

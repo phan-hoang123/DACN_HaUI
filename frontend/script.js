@@ -814,6 +814,22 @@ async function startMultiCamAI() {
   if (badgeEl) badgeEl.classList.remove("hidden");
 }
 
+// 2. Khởi động AI hàng loạt
+async function startMultiCamAI() {
+  // BẮT BUỘC bật cờ isMultiAiRunning = true TRƯỚC khi gọi napVideoChoCacCamera()
+  isMultiAiRunning = true;
+
+  const statusEl = document.getElementById("ai-system-status");
+  if (statusEl) {
+    statusEl.innerText =
+      "Kết nối YOLO Server thành công. Đang phân tích luồng Video...";
+  }
+  const badgeEl = document.getElementById("ai-running-badge");
+  if (badgeEl) badgeEl.classList.remove("hidden");
+
+  napVideoChoCacCamera();
+}
+
 // 3. Hàm nạp Video và nổ máy AI cho TẤT CẢ camera đang có
 function napVideoChoCacCamera() {
   aiCameras.forEach((cam, index) => {
@@ -828,9 +844,9 @@ function napVideoChoCacCamera() {
     // NẾU LÀ CHUỒNG 1 (CAM 01): DÙNG LUỒNG CAMERA EZVIZ THẬT TỪ SERVER UBUNTU
     if (cam.id === 1) {
       cam.video.pause();
-      cam.video.removeAttribute("src"); // Ngắt video_lon.mp4 cũ ở CAM 01
+      cam.video.removeAttribute("src");
       cam.video.load();
-      cam.video.classList.add("hidden"); // Ẩn thẻ video cũ để hiển thị thẳng Canvas EZVIZ
+      cam.video.classList.add("hidden");
 
       if (!cam.isFetching) {
         cam.isFetching = true;
@@ -857,26 +873,40 @@ function napVideoChoCacCamera() {
   });
 }
 
-// 4. GIAO TIẾP VỚI YOLO (Tự động phân luồng: CAM 1 đọc EZVIZ Cloud, các CAM khác đọc video mô phỏng)
+// 4. GIAO TIẾP VỚI YOLO (CAM 1 lấy ảnh EZVIZ thật, các CAM khác đọc video mô phỏng)
 async function fetchYoloData(cam) {
-  if (!isMultiAiRunning || !cam.canvas) return;
+  if (!isMultiAiRunning || !cam.canvas) {
+    cam.isFetching = false;
+    return;
+  }
 
   // --- TRƯỜNG HỢP 1: CHUỒNG 1 (CAM 01) LẤY HÌNH ẢNH TRỰC TIẾP TỪ CAMERA EZVIZ ---
   if (cam.id === 1) {
     try {
-      const response = await fetch(`/api/ai/ezviz/1`); // Gọi chuẩn phương thức GET
+      // Thử gọi qua /api/ai/ezviz/1 trước, nếu Nginx chặn thì tự động gọi qua /api/ai/detect
+      let response = await fetch(`/api/ai/ezviz/1?t=${Date.now()}`);
+      if (!response.ok) {
+        response = await fetch("/api/ai/detect", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image_base64: "EZVIZ_STREAM" }),
+        });
+      }
+
       const result = await response.json();
 
       if (result.status === "success" && result.frame_base64) {
-        const img = new Image();
-        img.onload = () => {
-          // Vẽ hình ảnh thật từ Camera EZVIZ lên toàn bộ màn hình CAM 01
-          cam.ctx.clearRect(0, 0, cam.canvas.width, cam.canvas.height);
-          cam.ctx.drawImage(img, 0, 0, cam.canvas.width, cam.canvas.height);
-          // Vẽ đè khung xanh nhận diện AI và cập nhật số lượng cá thể
-          xuLyHanhViVatNuoi(cam, result.data || []);
-        };
-        img.src = result.frame_base64;
+        await new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+            cam.ctx.clearRect(0, 0, cam.canvas.width, cam.canvas.height);
+            cam.ctx.drawImage(img, 0, 0, cam.canvas.width, cam.canvas.height);
+            xuLyHanhViVatNuoi(cam, result.data || []);
+            resolve();
+          };
+          img.onerror = resolve;
+          img.src = result.frame_base64;
+        });
       }
     } catch (error) {
       console.error("Lỗi kết nối Camera EZVIZ:", error);

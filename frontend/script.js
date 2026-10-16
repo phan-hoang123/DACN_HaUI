@@ -860,7 +860,7 @@ async function fetchYoloData(cam) {
     const frameBase64 = cam.canvas.toDataURL("image/jpeg", 0.7);
 
     // LƯU Ý: Đổi localhost:8000 thành 20.48.3.215:8000 nếu YOLO chạy trên máy ảo Ubuntu
-    const response = await fetch("/api/ai/detect", {
+    const response = await fetch("/api/ai/ezviz/1", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

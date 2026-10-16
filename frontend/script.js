@@ -822,19 +822,32 @@ function napVideoChoCacCamera() {
     if (!cam.video || !cam.canvas) return;
 
     cam.ctx = cam.canvas.getContext("2d");
+    cam.canvas.width = 640;
+    cam.canvas.height = 360;
 
-    // Chọn nguồn video (Nếu có video_lon_2.mp4 thì gán cho chuồng chẵn, không thì dùng video_lon.mp4 nhưng tua lệch thời gian để 2 cam đếm khác nhau)
+    // NẾU LÀ CHUỒNG 1 (CAM 01): DÙNG LUỒNG CAMERA EZVIZ THẬT TỪ SERVER UBUNTU
+    if (cam.id === 1) {
+      cam.video.pause();
+      cam.video.removeAttribute("src"); // Ngắt video_lon.mp4 cũ ở CAM 01
+      cam.video.load();
+      cam.video.classList.add("hidden"); // Ẩn thẻ video cũ để hiển thị thẳng Canvas EZVIZ
+
+      if (!cam.isFetching) {
+        cam.isFetching = true;
+        fetchYoloData(cam);
+      }
+      return;
+    }
+
+    // CÁC CHUỒNG CÒN LẠI (CAM 02...): Giữ nguyên video mô phỏng
+    cam.video.classList.remove("hidden");
     cam.video.src = "video_lon.mp4";
     cam.video.loop = true;
     cam.video.muted = true;
 
     cam.video.onloadeddata = () => {
-      // Tua lệch mỗi chuồng 3 giây để các chuồng không bị trùng khung hình
       cam.video.currentTime = (index * 3) % (cam.video.duration || 10);
       cam.video.play();
-
-      cam.canvas.width = 640;
-      cam.canvas.height = 360;
 
       if (!cam.isFetching) {
         cam.isFetching = true;
@@ -844,11 +857,39 @@ function napVideoChoCacCamera() {
   });
 }
 
-// 4. GIAO TIẾP VỚI YOLO (Dùng chung cho N camera)
+// 4. GIAO TIẾP VỚI YOLO (Tự động phân luồng: CAM 1 đọc EZVIZ Cloud, các CAM khác đọc video mô phỏng)
 async function fetchYoloData(cam) {
-  if (!isMultiAiRunning || !cam.video) return;
+  if (!isMultiAiRunning || !cam.canvas) return;
 
-  if (cam.video.readyState < 2) {
+  // --- TRƯỜNG HỢP 1: CHUỒNG 1 (CAM 01) LẤY HÌNH ẢNH TRỰC TIẾP TỪ CAMERA EZVIZ ---
+  if (cam.id === 1) {
+    try {
+      const response = await fetch(`/api/ai/ezviz/1?t=${Date.now()}`); // Gọi chuẩn phương thức GET
+      const result = await response.json();
+
+      if (result.status === "success" && result.frame_base64) {
+        const img = new Image();
+        img.onload = () => {
+          // Vẽ hình ảnh thật từ Camera EZVIZ lên toàn bộ màn hình CAM 01
+          cam.ctx.clearRect(0, 0, cam.canvas.width, cam.canvas.height);
+          cam.ctx.drawImage(img, 0, 0, cam.canvas.width, cam.canvas.height);
+          // Vẽ đè khung xanh nhận diện AI và cập nhật số lượng cá thể
+          xuLyHanhViVatNuoi(cam, result.data || []);
+        };
+        img.src = result.frame_base64;
+      }
+    } catch (error) {
+      console.error("Lỗi kết nối Camera EZVIZ:", error);
+    }
+
+    setTimeout(() => {
+      requestAnimationFrame(() => fetchYoloData(cam));
+    }, 200);
+    return;
+  }
+
+  // --- TRƯỜNG HỢP 2: CÁC CHUỒNG KHÁC (CAM 02...) GỬI FRAME LÊN /api/ai/detect NHƯ CŨ ---
+  if (!cam.video || cam.video.readyState < 2) {
     setTimeout(() => {
       requestAnimationFrame(() => fetchYoloData(cam));
     }, 200);
@@ -859,8 +900,7 @@ async function fetchYoloData(cam) {
     cam.ctx.drawImage(cam.video, 0, 0, cam.canvas.width, cam.canvas.height);
     const frameBase64 = cam.canvas.toDataURL("image/jpeg", 0.7);
 
-    // LƯU Ý: Đổi localhost:8000 thành 20.48.3.215:8000 nếu YOLO chạy trên máy ảo Ubuntu
-    const response = await fetch("/api/ai/ezviz/1", {
+    const response = await fetch("/api/ai/detect", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -876,7 +916,6 @@ async function fetchYoloData(cam) {
       xuLyHanhViVatNuoi(cam, result.data);
     }
   } catch (error) {
-    // Nếu chưa bật server YOLO thì giữ nguyên trạng thái chờ
     console.error("Lỗi kết nối AI YOLO:", error);
   }
 

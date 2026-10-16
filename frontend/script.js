@@ -296,69 +296,62 @@ function renderBangCrudChuong(data) {
 }
 renderBangCrudChuong(danhSachChuong);
 
-// 8. Hàm tạo thẻ HTML cho phần Vận Hành Nhanh
+// 8. Hàm tạo thẻ HTML cho phần Vận Hành Nhanh (Đồng bộ trạng thái Quạt & Bơm thật)
 function renderDanhSachVanHanhNhanh(data) {
-    const listVanHanhNhanh = document.getElementById("danh-sach-van-hanh-nhanh");
-    if (!listVanHanhNhanh) return;
+  const listVanHanhNhanh = document.getElementById("danh-sach-van-hanh-nhanh");
+  if (!listVanHanhNhanh) return;
 
-    let html = "";
-    
-    // Đếm số chuồng để hiển thị lên thẻ Badge
-    const tongSoChuong = data.length;
-    const badgeSoChuong = document.querySelector("#tab-tong-quan .bg-gray-200.px-2.py-1.rounded");
-    if (badgeSoChuong) {
-        badgeSoChuong.innerText = `${tongSoChuong} CHUỒNG`;
-    }
+  let html = "";
 
-    data.forEach((chuong) => {
-        const maChuong = chuong.id > 9 ? chuong.id : "0" + chuong.id;
-        
-        // Tạo hiệu ứng random cho quạt và cám để demo (giống thẻ cũ)
-        const quatDangBat = Math.random() > 0.5;
-        const mauQuat = quatDangBat ? "text-material-orange border-material-orange/30 bg-material-orange/10" : "text-gray-500 border-gray-200 bg-gray-100";
-        const iconQuat = quatDangBat ? "fa-spin" : "";
-        const chuQuat = quatDangBat ? "BẬT" : "TẮT";
+  const tongSoChuong = data.length;
+  const badgeSoChuong = document.querySelector("#tab-tong-quan .bg-gray-200.px-2.py-1.rounded");
+  if (badgeSoChuong) {
+    badgeSoChuong.innerText = `${tongSoChuong} CHUỒNG`;
+  }
 
-        html += `
-            <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:border-material-purple transition-colors group">
-                <div class="flex justify-between items-start mb-3 border-b border-gray-100 pb-2">
-                    <div>
-                        <h4 class="text-sm font-bold text-gray-800 group-hover:text-material-purple transition-colors">CHUONG-${maChuong}</h4>
-                        <p class="text-[10px] text-gray-500 font-mono mt-0.5">${chuong.loai}</p>
-                    </div>
-                    <div class="flex space-x-1">
-                        <span class="bg-material-teal/10 text-material-teal border border-material-teal/30 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center" title="Máng ăn">
-                            <i class="fa-solid fa-bowl-food mr-1"></i> ĐẦY
-                        </span>
-                        <span class="${mauQuat} text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center ${quatDangBat ? 'animate-pulse' : ''}" title="Hệ thống làm mát">
-                            <i class="fa-solid fa-fan mr-1 ${iconQuat}"></i> ${chuQuat}
-                        </span>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-3 gap-2">
-                    <div class="text-center bg-gray-50 rounded p-1.5 border border-gray-100">
-                        <p class="text-[9px] text-gray-400 font-bold uppercase mb-0.5">Nhiệt độ</p>
-                        <p class="text-xs font-black text-material-pink" id="vh-temp-${chuong.id}">--°C</p>
-                    </div>
-                    <div class="text-center bg-gray-50 rounded p-1.5 border border-gray-100">
-                        <p class="text-[9px] text-gray-400 font-bold uppercase mb-0.5">Độ ẩm</p>
-                        <p class="text-xs font-black text-material-purple" id="vh-humid-${chuong.id}">--%</p>
-                    </div>
-                    <div class="text-center bg-gray-50 rounded p-1.5 border border-gray-100">
-                        <p class="text-[9px] text-gray-400 font-bold uppercase mb-0.5">Khí NH3</p>
-                        <p class="text-xs font-black text-material-orange" id="vh-nh3-${chuong.id}">-- ppm</p>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
+  data.forEach((chuong) => {
+    const maChuong = chuong.id > 9 ? chuong.id : "0" + chuong.id;
 
-    if (data.length === 0) {
-        html = `<p class="text-center text-xs text-gray-400 py-10">Chưa có dữ liệu chuồng trại.</p>`;
-    }
+    html += `
+      <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:border-material-purple transition-colors group">
+          <div class="flex justify-between items-start mb-3 border-b border-gray-100 pb-2">
+              <div>
+                  <h4 class="text-sm font-bold text-gray-800 group-hover:text-material-purple transition-colors">CHUONG-${maChuong}</h4>
+                  <p class="text-[10px] text-gray-500 font-mono mt-0.5">${chuong.loai}</p>
+              </div>
+              <div class="flex space-x-1">
+                  <span id="vh-mist-${chuong.id}" class="bg-gray-100 text-gray-500 border border-gray-200 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center" title="Máy bơm phun sương 12V">
+                      <i class="fa-solid fa-droplet mr-1"></i> BƠM: TẮT
+                  </span>
+                  <span id="vh-fan-${chuong.id}" class="bg-gray-100 text-gray-500 border border-gray-200 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center" title="Quạt thông gió 12V">
+                      <i class="fa-solid fa-fan mr-1"></i> QUẠT: TẮT
+                  </span>
+              </div>
+          </div>
+          
+          <div class="grid grid-cols-3 gap-2">
+              <div class="text-center bg-gray-50 rounded p-1.5 border border-gray-100">
+                  <p class="text-[9px] text-gray-400 font-bold uppercase mb-0.5">Nhiệt độ</p>
+                  <p class="text-xs font-black text-material-pink" id="vh-temp-${chuong.id}">--°C</p>
+              </div>
+              <div class="text-center bg-gray-50 rounded p-1.5 border border-gray-100">
+                  <p class="text-[9px] text-gray-400 font-bold uppercase mb-0.5">Độ ẩm</p>
+                  <p class="text-xs font-black text-material-purple" id="vh-humid-${chuong.id}">--%</p>
+              </div>
+              <div class="text-center bg-gray-50 rounded p-1.5 border border-gray-100">
+                  <p class="text-[9px] text-gray-400 font-bold uppercase mb-0.5">Khí NH3</p>
+                  <p class="text-xs font-black text-material-orange" id="vh-nh3-${chuong.id}">-- ppm</p>
+              </div>
+          </div>
+      </div>
+    `;
+  });
 
-    listVanHanhNhanh.innerHTML = html;
+  if (data.length === 0) {
+    html = `<p class="text-center text-xs text-gray-400 py-10">Chưa có dữ liệu chuồng trại.</p>`;
+  }
+
+  listVanHanhNhanh.innerHTML = html;
 }
 
 function locVanHanhNhanh() {
@@ -483,6 +476,148 @@ async function taiBieuDoLichSuAI() {
 
 taiBieuDoLichSuAI();
 
+// =========================================================================
+// HỆ THỐNG CẢNH BÁO THỜI GIAN THỰC & NHẬT KÝ TỰ ĐỘNG HÓA (QUẠT + BƠM 12V)
+// =========================================================================
+const trangThaiChuong = {}; // Ghi nhớ trạng thái từng chuồng để chống spam log mỗi 3 giây
+let chiLocCanhBao = false;  // Trạng thái nút "Lọc lỗi" ở tab Nhật ký
+let soCanhBaoMoi = 0;
+
+// Khởi tạo làm sạch dữ liệu mẫu tĩnh trong HTML ngay khi vào trang
+(function khoiTaoHeThongCanhBaoThat() {
+  const alertList = document.getElementById("alert-list");
+  if (alertList) alertList.innerHTML = "";
+
+  const logBox = document.getElementById("system-logs");
+  if (logBox) logBox.innerHTML = "";
+
+  // Gắn sự kiện cho nút "Lọc lỗi" trong tab Nhật ký & Cảnh báo
+  const filterBtn = document.querySelector("#tab-nhat-ky button");
+  if (filterBtn) {
+    filterBtn.onclick = () => {
+      chiLocCanhBao = !chiLocCanhBao;
+      filterBtn.className = chiLocCanhBao
+        ? "bg-rose-600 text-white text-xs sm:text-sm font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded shadow-sm transition-all"
+        : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs sm:text-sm font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded shadow-sm transition-all";
+      filterBtn.innerHTML = chiLocCanhBao
+        ? '<i class="fa-solid fa-filter-circle-xmark mr-1"></i> Đang lọc: Cảnh báo & Relay'
+        : '<i class="fa-solid fa-filter mr-1"></i> Lọc lỗi';
+
+      document.querySelectorAll("#system-logs p").forEach((p) => {
+        const isWarn = p.dataset.type === "WARNING" || p.dataset.type === "RELAY";
+        p.style.display = chiLocCanhBao && !isWarn ? "none" : "";
+      });
+    };
+  }
+
+  // Ghi dòng nhật ký khởi động thực tế đầu tiên
+  addSystemLog(
+    "Khởi động Trung tâm Điều hành IoT Farm. Đã kết nối Server Azure & luồng cảm biến thời gian thực.",
+    "SYSTEM"
+  );
+  dayCanhBaoTrangChu(
+    "ok",
+    "Hệ thống Giám sát & Relay sẵn sàng",
+    "Đang theo dõi ngưỡng Nhiệt độ, Độ ẩm, Khí độc NH3 và điều khiển tự động Quạt + Máy bơm 12V."
+  );
+})();
+
+// Hàm đẩy thẻ sự kiện mới lên bảng "Cảnh Báo Hệ Thống" ở Trang chủ (#alert-list)
+function dayCanhBaoTrangChu(loai, tieuDe, noiDung) {
+  const alertList = document.getElementById("alert-list");
+  if (!alertList) return;
+
+  const timeStr = new Date().toLocaleTimeString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+
+  let iconHtml = "";
+  let highlightClass = "bg-emerald-50/40 border-l-4 border-material-teal";
+
+  if (loai === "danger") {
+    iconHtml = `<div class="bg-material-pink/10 p-2 rounded-full mt-0.5 shrink-0"><i class="fa-solid fa-fire text-material-pink text-sm w-4 text-center animate-bounce"></i></div>`;
+    highlightClass = "bg-rose-50/70 border-l-4 border-material-pink";
+    soCanhBaoMoi++;
+  } else if (loai === "gas") {
+    iconHtml = `<div class="bg-material-orange/15 p-2 rounded-full mt-0.5 shrink-0"><i class="fa-solid fa-wind text-material-orange text-sm w-4 text-center animate-pulse"></i></div>`;
+    highlightClass = "bg-amber-50/70 border-l-4 border-material-orange";
+    soCanhBaoMoi++;
+  } else if (loai === "ai") {
+    iconHtml = `<div class="bg-material-purple/10 p-2 rounded-full mt-0.5 shrink-0"><i class="fa-solid fa-eye text-material-purple text-sm w-4 text-center"></i></div>`;
+    highlightClass = "bg-indigo-50/60 border-l-4 border-material-purple";
+  } else {
+    iconHtml = `<div class="bg-material-teal/10 p-2 rounded-full mt-0.5 shrink-0"><i class="fa-solid fa-check text-material-teal text-sm w-4 text-center"></i></div>`;
+  }
+
+  // Cập nhật số trên quả chuông thông báo trên Header
+  const bellBadge = document.querySelector("header .fa-bell")?.nextElementSibling;
+  if (bellBadge && soCanhBaoMoi > 0) {
+    bellBadge.innerText = soCanhBaoMoi > 9 ? "9+" : String(soCanhBaoMoi);
+  }
+
+  const newLi = document.createElement("li");
+  newLi.className = `p-3.5 sm:p-4 hover:bg-gray-50 transition-all duration-500 flex items-start space-x-3 sm:space-x-4 ${highlightClass}`;
+  newLi.innerHTML = `
+      ${iconHtml}
+      <div class="flex-1 min-w-0">
+          <div class="flex justify-between items-center mb-1 gap-2">
+              <h4 class="text-xs font-bold text-gray-800 truncate">${tieuDe}</h4>
+              <span class="text-[10px] text-gray-400 font-mono shrink-0">${timeStr}</span>
+          </div>
+          <p class="text-[11px] text-gray-600 line-clamp-2 sm:line-clamp-1">${noiDung}</p>
+      </div>
+  `;
+
+  alertList.prepend(newLi);
+
+  // Giữ tối đa 5 cảnh báo mới nhất trên Trang chủ cho gọn đẹp
+  while (alertList.children.length > 5) {
+    alertList.lastElementChild.remove();
+  }
+}
+
+// Hàm ghi Nhật ký hệ thống (#system-logs)
+function addSystemLog(message, type = "SYSTEM") {
+  const logBox = document.getElementById("system-logs");
+  if (!logBox) return;
+
+  const now = new Date();
+  const timeStr =
+    now.getFullYear() +
+    "-" +
+    String(now.getMonth() + 1).padStart(2, "0") +
+    "-" +
+    String(now.getDate()).padStart(2, "0") +
+    " " +
+    String(now.getHours()).padStart(2, "0") +
+    ":" +
+    String(now.getMinutes()).padStart(2, "0") +
+    ":" +
+    String(now.getSeconds()).padStart(2, "0");
+
+  let color = "text-emerald-400";
+  if (type === "SENSOR") color = "text-amber-400 font-bold";
+  if (type === "RELAY") color = "text-cyan-400 font-bold";
+  if (type === "ACCOUNTING") color = "text-blue-400";
+  if (type === "AI_VISION") color = "text-purple-400 font-bold";
+  if (type === "WARNING") color = "text-rose-500 font-bold";
+
+  const newLog = document.createElement("p");
+  newLog.dataset.type = type;
+  if (chiLocCanhBao && type !== "WARNING" && type !== "RELAY") {
+    newLog.style.display = "none";
+  }
+  newLog.innerHTML = `<span class="text-gray-500">[${timeStr}]</span> <span class="${color}">${type}:</span> ${message}`;
+
+  logBox.prepend(newLog);
+
+  while (logBox.children.length > 60) {
+    logBox.lastElementChild.remove();
+  }
+}
+
 // Vòng lặp cập nhật dữ liệu RIÊNG BIỆT cho từng chuồng mỗi 3 giây (GỌI TỪ /api/barn)
 setInterval(async () => {
   try {
@@ -491,33 +626,105 @@ setInterval(async () => {
     if (!response.ok) return;
     const barnsData = await response.json();
 
-    // Lưu lại vào biến toàn cục nếu cần
     danhSachChuong = barnsData;
 
     let tongNhiet = 0, tongAm = 0, tongNh3 = 0, soChuongCoData = 0;
+    let soQuatDangBat = 0;
 
     barnsData.forEach((chuong) => {
-      // Lấy dữ liệu cảm biến riêng của từng chuồng từ C# trả về
       const rawTemp = chuong.nhietDoHienTai ?? chuong.NhietDoHienTai;
       const rawHumid = chuong.doAmHienTai ?? chuong.DoAmHienTai;
       const rawNh3 = chuong.nh3HienTai ?? chuong.Nh3HienTai;
 
       if (rawTemp !== null && rawTemp !== undefined) {
+        const maChuong = chuong.id > 9 ? chuong.id : "0" + chuong.id;
         const lechNhiet = Number(chuong.lechNhietDo ?? chuong.LechNhietDo) || 0;
         const lechKhi = Number(chuong.lechNh3 ?? chuong.LechNh3) || 0;
         const nguongNong = Number(chuong.nguongNong ?? chuong.NguongNong) || 30;
         const nguongKhi = Number(chuong.nguongNh3 ?? chuong.NguongNh3) || 15;
 
-        // Tính chỉ số thực tế của chuồng (không còn cộng +4% cứng nữa)
-        const nhietDoChuong = (Number(rawTemp) + lechNhiet).toFixed(1);
-        const humidChuong = Math.min(100, Math.max(0, Number(rawHumid))).toFixed(1);
-        const nh3Chuong = (Number(rawNh3 || 10) + lechKhi).toFixed(1);
+        const nhietDoVal = Number(rawTemp) + lechNhiet;
+        const humidVal = Math.min(100, Math.max(0, Number(rawHumid)));
+        const nh3Val = Number(rawNh3 || 10) + lechKhi;
 
-        // Cộng dồn để tính trung bình cho 4 thẻ KPI trên đầu trang
-        tongNhiet += Number(nhietDoChuong);
-        tongAm += Number(humidChuong);
-        tongNh3 += Number(nh3Chuong);
+        const nhietDoChuong = nhietDoVal.toFixed(1);
+        const humidChuong = humidVal.toFixed(1);
+        const nh3Chuong = nh3Val.toFixed(1);
+
+        tongNhiet += nhietDoVal;
+        tongAm += humidVal;
+        tongNh3 += nh3Val;
         soChuongCoData++;
+
+        const isQuaNong = nhietDoVal >= nguongNong;
+        const isKhiDocCao = nh3Val >= nguongKhi;
+        const isQuatBat = isQuaNong || isKhiDocCao;
+        const isBomPhunSuongBat = isQuaNong;
+
+        if (isQuatBat) soQuatDangBat++;
+
+        // --- KIỂM TRA CHUYỂN TRẠNG THÁI ĐỂ BẮN CẢNH BÁO & GHI NHẬT KÝ THẬT (KHÔNG SPAM) ---
+        if (!trangThaiChuong[chuong.id]) {
+          trangThaiChuong[chuong.id] = {
+            quaNong: false,
+            khiDocCao: false,
+          };
+        }
+        const prevState = trangThaiChuong[chuong.id];
+
+        // A. Khi Nhiệt độ VƯỢT ngưỡng -> Báo bật Quạt 12V & Máy bơm phun sương 12V
+        if (isQuaNong && !prevState.quaNong) {
+          prevState.quaNong = true;
+          dayCanhBaoTrangChu(
+            "danger",
+            `Cảnh báo Nhiệt độ cao - CHUONG-${maChuong} (${chuong.loai})`,
+            `Nhiệt độ đạt ${nhietDoChuong}°C (vượt ngưỡng ${nguongNong}°C). Đã tự động BẬT Quạt 12V & Máy bơm phun sương.`
+          );
+          addSystemLog(
+            `CHUONG-${maChuong} (${chuong.loai}): Nhiệt độ tăng lên ${nhietDoChuong}°C (Ngưỡng ${nguongNong}°C) -> Đóng Relay BẬT Quạt làm mát & Máy bơm phun sương 12V.`,
+            "WARNING"
+          );
+        }
+        // B. Khi Nhiệt độ HẠ XUỐNG mức an toàn -> Báo tắt Máy bơm phun sương
+        else if (!isQuaNong && prevState.quaNong) {
+          prevState.quaNong = false;
+          dayCanhBaoTrangChu(
+            "ok",
+            `Nhiệt độ đã ổn định - CHUONG-${maChuong}`,
+            `Nhiệt độ giảm về ${nhietDoChuong}°C (< ${nguongNong}°C). Đã tự động NGẮT Máy bơm phun sương 12V.`
+          );
+          addSystemLog(
+            `CHUONG-${maChuong} (${chuong.loai}): Nhiệt độ hạ về mức an toàn (${nhietDoChuong}°C) -> Tự động NGẮT Relay Máy bơm phun sương 12V.`,
+            "RELAY"
+          );
+        }
+
+        // C. Khi Khí độc NH3 VƯỢT ngưỡng -> Báo bật Quạt hút khí độc tối đa
+        if (isKhiDocCao && !prevState.khiDocCao) {
+          prevState.khiDocCao = true;
+          dayCanhBaoTrangChu(
+            "gas",
+            `Cảnh báo Khí độc NH3 - CHUONG-${maChuong} (${chuong.loai})`,
+            `Khí NH3 đạt ${nh3Chuong} ppm (vượt ngưỡng ${nguongKhi} ppm). Đã kích hoạt Quạt hút gió công suất tối đa!`
+          );
+          addSystemLog(
+            `CHUONG-${maChuong} (${chuong.loai}): Phát hiện khí NH3 tăng cao (${nh3Chuong} ppm >= ${nguongKhi} ppm) -> Kích hoạt Relay Quạt thông gió hút khí độc.`,
+            "SENSOR"
+          );
+        }
+        // D. Khi Khí độc NH3 GIẢM VỀ an toàn
+        else if (!isKhiDocCao && prevState.khiDocCao) {
+          prevState.khiDocCao = false;
+          dayCanhBaoTrangChu(
+            "ok",
+            `Khí NH3 về mức an toàn - CHUONG-${maChuong}`,
+            `Nồng độ NH3 tại CHUONG-${maChuong} đã giảm xuống ${nh3Chuong} ppm (< ${nguongKhi} ppm).`
+          );
+          addSystemLog(
+            `CHUONG-${maChuong} (${chuong.loai}): Khí NH3 đã được xử lý về ngưỡng an toàn (${nh3Chuong} ppm).`,
+            "RELAY"
+          );
+        }
 
         // 1. Cập nhật tab Giám sát Cảm biến (Telemetry)
         const txtCamBienTemp = document.getElementById(`c${chuong.id}-temp`);
@@ -535,14 +742,16 @@ setInterval(async () => {
         if (txtTongQuanHumid) txtTongQuanHumid.innerText = humidChuong + " %";
         if (txtTongQuanNh3) txtTongQuanNh3.innerText = nh3Chuong + " ppm";
 
-        // 3. Cập nhật thẻ VẬN HÀNH NHANH
+        // 3. Cập nhật thẻ VẬN HÀNH NHANH (Nhiệt độ, Độ ẩm, NH3 + Nhãn Quạt & Bơm thật)
         const txtVHTemp = document.getElementById(`vh-temp-${chuong.id}`);
         const txtVHHumid = document.getElementById(`vh-humid-${chuong.id}`);
         const txtVHNh3 = document.getElementById(`vh-nh3-${chuong.id}`);
+        const badgeVHFan = document.getElementById(`vh-fan-${chuong.id}`);
+        const badgeVHMist = document.getElementById(`vh-mist-${chuong.id}`);
 
         if (txtVHTemp) {
           txtVHTemp.innerText = nhietDoChuong + "°C";
-          if (Number(nhietDoChuong) >= nguongNong) {
+          if (isQuaNong) {
             txtVHTemp.classList.replace("text-material-pink", "text-rose-600");
             txtVHTemp.classList.add("animate-pulse");
           } else {
@@ -553,7 +762,7 @@ setInterval(async () => {
         if (txtVHHumid) txtVHHumid.innerText = humidChuong + "%";
         if (txtVHNh3) {
           txtVHNh3.innerText = nh3Chuong + " ppm";
-          if (Number(nh3Chuong) >= nguongKhi) {
+          if (isKhiDocCao) {
             txtVHNh3.classList.replace("text-material-orange", "text-rose-600");
             txtVHNh3.classList.add("animate-pulse");
           } else {
@@ -562,15 +771,37 @@ setInterval(async () => {
           }
         }
 
-        // 4. Cập nhật trạng thái Quạt & Phun sương
+        // Cập nhật nhãn Quạt 12V trong Vận Hành Nhanh
+        if (badgeVHFan) {
+          if (isQuatBat) {
+            badgeVHFan.className = "text-material-orange border border-material-orange/30 bg-material-orange/10 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center animate-pulse";
+            badgeVHFan.innerHTML = '<i class="fa-solid fa-fan fa-spin mr-1"></i> QUẠT: BẬT';
+          } else {
+            badgeVHFan.className = "text-gray-500 border border-gray-200 bg-gray-100 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center";
+            badgeVHFan.innerHTML = '<i class="fa-solid fa-fan mr-1"></i> QUẠT: TẮT';
+          }
+        }
+
+        // Cập nhật nhãn Máy bơm phun sương 12V trong Vận Hành Nhanh
+        if (badgeVHMist) {
+          if (isBomPhunSuongBat) {
+            badgeVHMist.className = "bg-blue-50 text-blue-600 border border-blue-300 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center animate-pulse";
+            badgeVHMist.innerHTML = '<i class="fa-solid fa-droplet mr-1"></i> BƠM: BẬT';
+          } else {
+            badgeVHMist.className = "bg-material-teal/10 text-material-teal border border-material-teal/30 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center";
+            badgeVHMist.innerHTML = '<i class="fa-solid fa-droplet mr-1"></i> BƠM: TẮT';
+          }
+        }
+
+        // 4. Cập nhật trạng thái Quạt & Phun sương ở tab Telemetry
         const fan = document.getElementById(`device-fan-${chuong.id}`);
         const mist = document.getElementById(`device-mist-${chuong.id}`);
         if (fan) {
-          if (Number(nh3Chuong) >= nguongKhi) {
+          if (isKhiDocCao) {
             fan.className = "text-amber-500 font-bold animate-pulse ml-1";
             fan.innerText = "ĐANG HÚT KHÍ ĐỘC";
-          } else if (Number(nhietDoChuong) >= nguongNong) {
-            fan.className = "text-rose-600 font-bold animate-pulse ml-1";
+          } else if (isQuaNong) {
+            fan.className = "text-rose-500 font-bold animate-pulse ml-1";
             fan.innerText = "ĐANG BẬT (MAX)";
           } else {
             fan.className = "text-emerald-400 font-bold ml-1";
@@ -578,8 +809,8 @@ setInterval(async () => {
           }
         }
         if (mist) {
-          if (Number(nhietDoChuong) >= nguongNong) {
-            mist.className = "text-blue-400 font-bold ml-1";
+          if (isBomPhunSuongBat) {
+            mist.className = "text-blue-400 font-bold animate-pulse ml-1";
             mist.innerText = "ĐANG PHUN SƯƠNG";
           } else {
             mist.className = "text-slate-500 ml-1";
@@ -589,7 +820,7 @@ setInterval(async () => {
       }
     });
 
-    // Cập nhật các thẻ KPI Trung bình trên đầu trang Tổng quan
+    // Cập nhật các thẻ KPI Trung bình & Khối Đánh Giá Môi Trường trên Trang chủ
     if (soChuongCoData > 0) {
       const tbNhiet = (tongNhiet / soChuongCoData).toFixed(1);
       const tbAm = (tongAm / soChuongCoData).toFixed(1);
@@ -598,17 +829,38 @@ setInterval(async () => {
       const elKpiTemp = document.getElementById("kpi-temp");
       const elKpiHumid = document.getElementById("kpi-do-am");
       const elLiveNh3 = document.getElementById("live-nh3");
+      const elNh3Badge = document.getElementById("nh3-badge");
+      const elLiveFanCount = document.getElementById("live-fan-count");
 
       if (elKpiTemp) elKpiTemp.innerText = tbNhiet + "°C";
       if (elKpiHumid) elKpiHumid.innerHTML = tbAm + '<span class="text-lg font-bold text-slate-400 ml-1">%</span>';
       if (elLiveNh3) elLiveNh3.innerText = tbNh3;
 
-      // Cập nhật dòng trạng thái dưới thẻ KPI Nhiệt độ & Độ ẩm (bỏ chữ Chờ dữ liệu từ Gateway)
+      // Cập nhật số lượng Quạt đang hoạt động thực tế (thay cho số 2/4 cứng)
+      if (elLiveFanCount) {
+        elLiveFanCount.innerText = `${soQuatDangBat}/${barnsData.length}`;
+      }
+
+      // Cập nhật Badge đánh giá mức độ khí NH3 thực tế
+      if (elNh3Badge) {
+        const nh3Num = Number(tbNh3);
+        if (nh3Num >= 15) {
+          elNh3Badge.className = "text-[10px] font-bold bg-material-pink/10 text-material-pink px-2 py-0.5 rounded border border-material-pink/20 animate-pulse";
+          elNh3Badge.innerText = "NGUY HIỂM";
+        } else if (nh3Num >= 10) {
+          elNh3Badge.className = "text-[10px] font-bold bg-material-orange/10 text-material-orange px-2 py-0.5 rounded border border-material-orange/20";
+          elNh3Badge.innerText = "CẢNH BÁO NHẸ";
+        } else {
+          elNh3Badge.className = "text-[10px] font-bold bg-material-teal/10 text-material-teal px-2 py-0.5 rounded border border-material-teal/20";
+          elNh3Badge.innerText = "AN TOÀN";
+        }
+      }
+
       const tempStatus = document.getElementById("kpi-temp-status");
       if (tempStatus) {
-        if (Number(tbNhiet) >= 32) {
+        if (Number(tbNhiet) >= 30) {
           tempStatus.className = "text-[10px] text-rose-600 font-bold mt-2 flex items-center animate-pulse";
-          tempStatus.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> Cảnh báo: Nhiệt độ cao!';
+          tempStatus.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> Cảnh báo: Đang bật làm mát!';
         } else {
           tempStatus.className = "text-[10px] text-material-teal font-bold mt-2 flex items-center";
           tempStatus.innerHTML = '<i class="fa-solid fa-check-circle mr-1"></i> Ngưỡng an toàn lý tưởng';
@@ -621,7 +873,7 @@ setInterval(async () => {
         humidStatus.innerHTML = '<i class="fa-solid fa-droplet mr-1"></i> Duy trì mức ổn định';
       }
 
-      // CẬP NHẬT BIỂU ĐỒ ĐƯỜNG (BIẾN THIÊN MÔI TRƯỜNG) MỖI 3 GIÂY
+      // CẬP NHẬT BIỂU ĐỒ ĐƯỜNG MỖI 3 GIÂY
       if (typeof mainChart !== "undefined") {
         const timeString = new Date().toLocaleTimeString("vi-VN", {
           hour: "2-digit",
@@ -633,7 +885,6 @@ setInterval(async () => {
         mainChart.data.datasets[0].data.push(Number(tbNhiet));
         mainChart.data.datasets[1].data.push(Number(tbAm));
 
-        // Giữ tối đa 15 mốc thời gian gần nhất trên biểu đồ
         if (mainChart.data.labels.length > 15) {
           mainChart.data.labels.shift();
           mainChart.data.datasets[0].data.shift();
@@ -642,7 +893,7 @@ setInterval(async () => {
         mainChart.update();
       }
 
-      // GỌI AI XGBOOST DỰ BÁO THỜI TIẾT 2 GIỜ TỚI DỰA TRÊN NHIỆT ĐỘ & ĐỘ ẨM TRUNG BÌNH
+      // GỌI AI XGBOOST DỰ BÁO THỜI TIẾT 2 GIỜ TỚI
       try {
         const currentHour = new Date().getHours();
         const aiRes = await fetch("/api/predict-weather", {
@@ -657,40 +908,13 @@ setInterval(async () => {
 
         if (aiRes.ok) {
           const aiData = await aiRes.json();
-
-          // 1. Cập nhật số nhiệt độ dự báo 2h tới
           const elPredictTemp = document.getElementById("ai-predict-temp");
           if (elPredictTemp && aiData.predicted_temp !== undefined) {
             elPredictTemp.innerText = `${aiData.predicted_temp}°C`;
           }
-
-          // 2. Cập nhật lời khuyên của Hệ chuyên gia AI
           const elActionText = document.getElementById("ai-action-text");
           if (elActionText && aiData.message) {
             elActionText.innerText = `"${aiData.message}"`;
-          }
-
-          // 3. Cập nhật các thẻ hành động (Rèm che & Quạt)
-          const elTags = document.getElementById("ai-action-tags");
-          if (elTags) {
-            if (aiData.predicted_temp >= 38.0) {
-              elTags.innerHTML = `
-                <span class="px-2.5 py-1.5 bg-rose-500/10 border border-rose-500/50 text-rose-400 text-[9px] font-bold rounded-none uppercase tracking-wider"><i class="fa-solid fa-triangle-exclamation mr-1"></i> ${aiData.cap_do}</span>
-                <span class="px-2.5 py-1.5 bg-amber-500/10 border border-amber-500/50 text-amber-400 text-[9px] font-bold rounded-none uppercase tracking-wider"><i class="fa-solid fa-person-shelter mr-1"></i> ${aiData.rem_che}</span>
-                <span class="px-2.5 py-1.5 bg-blue-500/10 border border-blue-500/50 text-blue-400 text-[9px] font-bold rounded-none uppercase tracking-wider"><i class="fa-solid fa-fan fa-spin mr-1"></i> ${aiData.quat}</span>
-              `;
-            } else if (aiData.predicted_temp >= 35.0) {
-              elTags.innerHTML = `
-                <span class="px-2.5 py-1.5 bg-amber-500/10 border border-amber-500/50 text-amber-400 text-[9px] font-bold rounded-none uppercase tracking-wider"><i class="fa-solid fa-sun mr-1"></i> ${aiData.cap_do}</span>
-                <span class="px-2.5 py-1.5 bg-cyan-500/10 border border-cyan-500/50 text-cyan-400 text-[9px] font-bold rounded-none uppercase tracking-wider"><i class="fa-solid fa-person-shelter mr-1"></i> ${aiData.rem_che}</span>
-                <span class="px-2.5 py-1.5 bg-blue-500/10 border border-blue-500/50 text-blue-400 text-[9px] font-bold rounded-none uppercase tracking-wider"><i class="fa-solid fa-fan mr-1"></i> ${aiData.quat}</span>
-              `;
-            } else {
-              elTags.innerHTML = `
-                <span class="px-2.5 py-1.5 bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 text-[9px] font-bold rounded-none uppercase tracking-wider"><i class="fa-solid fa-leaf mr-1"></i> ${aiData.cap_do}: ECO TIẾT KIỆM</span>
-                <span class="px-2.5 py-1.5 bg-slate-500/10 border border-slate-500/50 text-slate-300 text-[9px] font-bold rounded-none uppercase tracking-wider">${aiData.rem_che} | ${aiData.quat}</span>
-              `;
-            }
           }
         }
       } catch (err) {
@@ -701,40 +925,6 @@ setInterval(async () => {
     console.error("Lỗi cập nhật dữ liệu chuồng:", error);
   }
 }, 3000);
-
-// Hàm ghi nhật ký hệ thống
-function addSystemLog(message, type = "SYSTEM") {
-  const logBox = document.getElementById("system-logs");
-  if (!logBox) return;
-
-  const now = new Date();
-  const timeStr = // Định dạng thời gian: YYYY-MM-DD HH:MM:SS
-    now.getFullYear() +
-    "-" +
-    String(now.getMonth() + 1).padStart(2, "0") +
-    "-" +
-    String(now.getDate()).padStart(2, "0") +
-    " " +
-    String(now.getHours()).padStart(2, "0") +
-    ":" +
-    String(now.getMinutes()).padStart(2, "0") +
-    ":" +
-    String(now.getSeconds()).padStart(2, "0");
-
-  let color = "text-emerald-400";
-  if (type === "SENSOR") color = "text-amber-400";
-  if (type === "ACCOUNTING") color = "text-blue-400";
-  if (type === "WARNING") color = "text-rose-500 font-bold";
-
-  const newLog = document.createElement("p");
-  newLog.innerHTML = `<span class="text-slate-500">[${timeStr}]</span> <span class="${color}">${type}:</span> ${message}`; // Tạo thẻ <p> mới cho log
-
-  logBox.prepend(newLog);
-
-  if (logBox.children.length > 50) {
-    logBox.lastChild.remove();
-  }
-}
 
 // 5. Quản lý AI Camera
 let isMultiAiRunning = false;

@@ -793,30 +793,8 @@ function renderAICameraGrid() {
 }
 renderAICameraGrid();
 
-// 2. Khởi động AI hàng loạt
+// 2. Khởi động AI hàng loạt (Đã xóa hàm bị trùng)
 async function startMultiCamAI() {
-  if (isMultiAiRunning) return;
-
-  const statusEl = document.getElementById("ai-system-status");
-  if (statusEl) {
-    statusEl.innerHTML =
-      '<i class="fa-solid fa-spinner fa-spin text-rose-500 mr-1"></i> Đang khởi tạo kết nối đến YOLO Server...';
-  }
-
-  napVideoChoCacCamera();
-
-  isMultiAiRunning = true;
-  if (statusEl) {
-    statusEl.innerText =
-      "Kết nối YOLO Server thành công. Đang phân tích luồng Video...";
-  }
-  const badgeEl = document.getElementById("ai-running-badge");
-  if (badgeEl) badgeEl.classList.remove("hidden");
-}
-
-// 2. Khởi động AI hàng loạt
-async function startMultiCamAI() {
-  // BẮT BUỘC bật cờ isMultiAiRunning = true TRƯỚC khi gọi napVideoChoCacCamera()
   isMultiAiRunning = true;
 
   const statusEl = document.getElementById("ai-system-status");
@@ -873,7 +851,7 @@ function napVideoChoCacCamera() {
   });
 }
 
-// 4. GIAO TIẾP VỚI YOLO (CAM 1 lấy ảnh EZVIZ thật, các CAM khác đọc video mô phỏng)
+// 4. GIAO TIẾP VỚI YOLO (Cả CAM 1 và CAM 2 đều đi qua cổng /api/ai/detect của Nginx)
 async function fetchYoloData(cam) {
   if (!isMultiAiRunning || !cam.canvas) {
     cam.isFetching = false;
@@ -883,30 +861,27 @@ async function fetchYoloData(cam) {
   // --- TRƯỜNG HỢP 1: CHUỒNG 1 (CAM 01) LẤY HÌNH ẢNH TRỰC TIẾP TỪ CAMERA EZVIZ ---
   if (cam.id === 1) {
     try {
-      // Thử gọi qua /api/ai/ezviz/1 trước, nếu Nginx chặn thì tự động gọi qua /api/ai/detect
-      let response = await fetch(`/api/ai/ezviz/1?t=${Date.now()}`);
-      if (!response.ok) {
-        response = await fetch("/api/ai/detect", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image_base64: "EZVIZ_STREAM" }),
-        });
-      }
+      const response = await fetch("/api/ai/detect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_base64: "EZVIZ_STREAM" }),
+      });
 
-      const result = await response.json();
-
-      if (result.status === "success" && result.frame_base64) {
-        await new Promise((resolve) => {
-          const img = new Image();
-          img.onload = () => {
-            cam.ctx.clearRect(0, 0, cam.canvas.width, cam.canvas.height);
-            cam.ctx.drawImage(img, 0, 0, cam.canvas.width, cam.canvas.height);
-            xuLyHanhViVatNuoi(cam, result.data || []);
-            resolve();
-          };
-          img.onerror = resolve;
-          img.src = result.frame_base64;
-        });
+      if (response.ok) {
+        const result = await response.json();
+        if (result.status === "success" && result.frame_base64) {
+          await new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+              cam.ctx.clearRect(0, 0, cam.canvas.width, cam.canvas.height);
+              cam.ctx.drawImage(img, 0, 0, cam.canvas.width, cam.canvas.height);
+              xuLyHanhViVatNuoi(cam, result.data || []);
+              resolve();
+            };
+            img.onerror = resolve;
+            img.src = result.frame_base64;
+          });
+        }
       }
     } catch (error) {
       console.error("Lỗi kết nối Camera EZVIZ:", error);
@@ -939,11 +914,13 @@ async function fetchYoloData(cam) {
       }),
     });
 
-    const result = await response.json();
-    cam.ctx.clearRect(0, 0, cam.canvas.width, cam.canvas.height);
+    if (response.ok) {
+      const result = await response.json();
+      cam.ctx.clearRect(0, 0, cam.canvas.width, cam.canvas.height);
 
-    if (result.status === "success") {
-      xuLyHanhViVatNuoi(cam, result.data);
+      if (result.status === "success") {
+        xuLyHanhViVatNuoi(cam, result.data);
+      }
     }
   } catch (error) {
     console.error("Lỗi kết nối AI YOLO:", error);

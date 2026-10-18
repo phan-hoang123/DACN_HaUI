@@ -90,29 +90,63 @@ const mainChart = new Chart(ctxMain, { // Khởi tạo biểu đồ chính
 // Biến toàn cục rỗng, chờ lấy dữ liệu từ backend
 let danhSachChuong = [];
 
-//Kết nối API Backend để lấy dữ liệu chuồng trại và cập nhật giao diện
-// 1. Lấy dữ liệu từ Backend
+// Hàm lấy ID của tài khoản đang đăng nhập (Mặc định Admin gốc có id = 1)
+function layUserIdHienTai() {
+  try {
+    const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+    if (user.id) return Number(user.id);
+    if (user.username && user.username.toLowerCase() === "admin") return 1;
+  } catch (e) {}
+  return 1;
+}
+
+// Hỏi dữ liệu chuồng thuộc về đúng UserId đang đăng nhập
+function locChuongTheoUser(allBarns) {
+  const uid = layUserIdHienTai();
+  return allBarns.filter((c) => {
+    const prefix = String(c.prefix || c.Prefix || "");
+    const barnUserId = c.userId ?? c.UserId;
+    if (barnUserId !== undefined && barnUserId !== null) {
+      return Number(barnUserId) === uid;
+    }
+    // Nếu Backend C# chưa trả cột UserId thì đọc mã u{uid}_ trong Prefix
+    if (prefix.startsWith(`u${uid}_`)) return true;
+    // Các chuồng cũ (t378, t756...) chưa có tiền tố u_ thì thuộc về Admin gốc (uid = 1)
+    if (uid === 1 && !prefix.startsWith("u")) return true;
+    return false;
+  });
+}
+
+// 1. Lấy dữ liệu từ Backend (Chỉ hiển thị chuồng của tài khoản đang đăng nhập)
 async function loadDanhSachChuong() {
   try {
     const response = await fetch("/api/barn");
     if (response.ok) {
-      danhSachChuong = await response.json(); 
+      const allBarns = await response.json();
+      danhSachChuong = locChuongTheoUser(allBarns);
 
-      // Gọi một loạt các hàm render ở đây
       renderBangCrudChuong(danhSachChuong);
       renderGiaoDienChuongTrai();
       renderCameraList();
       renderAICameraGrid();
-      
-      // THÊM DÒNG NÀY VÀO ĐỂ NÓ CẬP NHẬT DANH SÁCH VẬN HÀNH NHANH
-      renderDanhSachVanHanhNhanh(danhSachChuong); 
-      startMultiCamAI();
+      renderDanhSachVanHanhNhanh(danhSachChuong);
+
+      if (danhSachChuong.length > 0) {
+        startMultiCamAI();
+      } else {
+        // Nếu tài khoản mới chưa có chuồng nào -> Đặt các thẻ KPI về trạng thái trống
+        const kpiDan = document.getElementById("kpi-tong-dan");
+        if (kpiDan) kpiDan.innerText = "0 cá thể";
+        const kpiDanStt = document.getElementById("kpi-tong-dan-status");
+        if (kpiDanStt) kpiDanStt.innerHTML = '<i class="fa-solid fa-circle-info mr-1"></i> Chưa có chuồng nuôi';
+        const liveNh3 = document.getElementById("live-nh3");
+        if (liveNh3) liveNh3.innerText = "0.0";
+      }
     }
   } catch (error) {
     console.error("Lỗi kéo dữ liệu từ CSDL:", error);
   }
 }
-// Chạy ngay khi vào web
 loadDanhSachChuong();
 
 
@@ -169,8 +203,9 @@ async function luuChuong(event) {
         "SYSTEM",
       );
     } else {
-      // THÊM MỚI: GỌI POST
-      payload.prefix = "t" + Math.floor(Math.random() * 1000); // Sinh random prefix cho mạch
+      const uid = layUserIdHienTai();
+      payload.userId = uid;
+      payload.prefix = `u${uid}_t` + Math.floor(Math.random() * 1000);
       await fetch("/api/barn", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -624,8 +659,8 @@ setInterval(async () => {
     const timestamp = new Date().getTime();
     const response = await fetch(`/api/barn?t=${timestamp}`);
     if (!response.ok) return;
-    const barnsData = await response.json();
-
+    const rawBarnsData = await response.json();
+    const barnsData = locChuongTheoUser(rawBarnsData);
     danhSachChuong = barnsData;
 
     let tongNhiet = 0, tongAm = 0, tongNh3 = 0, soChuongCoData = 0;

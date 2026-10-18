@@ -3,91 +3,319 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Đăng nhập - IoT Farm</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập & Đăng ký - Hệ thống VIGGA IoT Farm</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Roboto', 'sans-serif'] },
+                    colors: {
+                        material: {
+                            purple: '#4e73df',
+                            purple_light: '#6e8ff0',
+                            teal: '#1cc88a',
+                            dark: '#1a1c24',
+                            pink: '#e74a3b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
 </head>
 
-<body class="bg-[#0f172a] min-h-[100dvh] px-4 py-6 flex items-center justify-center font-['Inter']">
+<body class="min-h-screen bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
+    <!-- Hiệu ứng nền -->
+    <div class="absolute -top-24 -left-24 w-96 h-96 bg-material-purple/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-material-teal/20 rounded-full blur-3xl pointer-events-none"></div>
 
-    <!-- Login Form -->
-    <div class="bg-white p-6 sm:p-8 border-t-4 border-blue-600 shadow-2xl w-full max-w-md rounded-lg sm:rounded-none">
-        <div class="text-center mb-6 sm:mb-8">
-            <div class="bg-blue-600 w-12 h-12 flex items-center justify-center text-white text-2xl mx-auto mb-3 rounded sm:rounded-none">
-                <i class="fa-solid fa-shield-halved"></i>
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden z-10 border border-slate-200">
+        <!-- Header thương hiệu -->
+        <div class="bg-material-dark p-6 text-center border-b-4 border-material-teal">
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-material-teal/10 border border-material-teal/30 mb-3">
+                <i class="fa-solid fa-seedling text-material-teal text-2xl"></i>
             </div>
-            <h2 class="text-xl sm:text-2xl font-black text-slate-800 tracking-wide uppercase">Login</h2>
-            <p class="text-[11px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Hệ Thống Quản Lý Thông Minh</p>
+            <h1 class="text-white font-black tracking-widest uppercase text-xl">VIGGA <span class="font-light text-material-teal">IoT FARM</span></h1>
+            <p class="text-xs text-gray-400 mt-1">Nền tảng Quản trị Trang trại Thông minh & AI Cloud</p>
         </div>
 
-        <form id="loginForm" class="space-y-4 sm:space-y-5">
-            <div>
-                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Username</label>
-                <input type="text" id="username" required
-                    class="w-full bg-slate-50 border border-slate-300 p-3 text-base sm:text-sm rounded sm:rounded-none focus:outline-none focus:border-blue-600 font-mono text-slate-700">
-            </div>
-
-            <div>
-                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Password</label>
-                <input type="password" id="password" required
-                    class="w-full bg-slate-50 border border-slate-300 p-3 text-base sm:text-sm rounded sm:rounded-none focus:outline-none focus:border-blue-600 font-mono text-slate-700">
-            </div>
-
-            <p id="errorMsg" class="text-rose-600 text-xs font-bold hidden">
-                <i class="fa-solid fa-triangle-exclamation mr-1"></i> Sai thông tin xác thực!
-            </p>
-
-            <button type="submit" id="loginBtn"
-                class="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold py-3 text-sm rounded sm:rounded-none transition-all uppercase tracking-widest border-b-4 border-blue-800">
-                XÁC THỰC TRUY CẬP
+        <!-- Thanh chuyển Tab: Đăng nhập / Đăng ký -->
+        <div class="grid grid-cols-2 border-b border-gray-200 bg-gray-50 text-xs font-black uppercase tracking-wider">
+            <button id="tab-btn-login" onclick="switchAuthTab('login')" class="py-3.5 text-material-purple border-b-2 border-material-purple bg-white transition-all">
+                <i class="fa-solid fa-right-to-bracket mr-1.5"></i>Đăng nhập
             </button>
-        </form>
+            <button id="tab-btn-register" onclick="switchAuthTab('register')" class="py-3.5 text-gray-400 hover:text-gray-600 transition-all">
+                <i class="fa-solid fa-user-plus mr-1.5"></i>Tạo tài khoản
+            </button>
+        </div>
 
-        <p class="text-center text-[10px] text-slate-400 mt-6 font-mono">Đồ án môn học - Đại học Công nghiệp Hà Nội</p>
+        <div class="p-6 sm:p-7">
+            <!-- Thông báo lỗi / thành công -->
+            <div id="auth-alert" class="hidden mb-4 p-3 rounded-lg text-xs font-bold flex items-center"></div>
+
+            <!-- 1. FORM ĐĂNG NHẬP -->
+            <form id="form-login" onsubmit="xuLyDangNhap(event)" class="space-y-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Tên đăng nhập hoặc Email</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user absolute left-3.5 top-3 text-gray-400 text-sm"></i>
+                        <input type="text" id="login-username" required placeholder="Nhập username hoặc email..."
+                            class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-material-purple focus:ring-1 focus:ring-material-purple">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Mật khẩu</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3.5 top-3 text-gray-400 text-sm"></i>
+                        <input type="password" id="login-password" required placeholder="••••••••"
+                            class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-material-purple focus:ring-1 focus:ring-material-purple">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-material-purple hover:bg-material-purple_light text-white font-bold py-2.5 rounded-lg shadow-md transition-all text-sm uppercase tracking-wider">
+                    Truy cập Hệ thống
+                </button>
+            </form>
+
+            <!-- 2. FORM ĐĂNG KÝ TÀI KHOẢN MỚI -->
+            <form id="form-register" onsubmit="xuLyDangKy(event)" class="space-y-3.5 hidden">
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Họ và tên Chủ trang trại</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-id-badge absolute left-3.5 top-3 text-gray-400 text-sm"></i>
+                        <input type="text" id="reg-fullname" required placeholder="Ví dụ: Nguyễn Văn A"
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-material-teal">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Tên tài khoản (Username) hoặc Email</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-envelope absolute left-3.5 top-3 text-gray-400 text-sm"></i>
+                        <input type="text" id="reg-username" required placeholder="Ví dụ: trangtrai_b"
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-material-teal">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Mật khẩu</label>
+                        <input type="password" id="reg-password" required placeholder="••••••••"
+                            class="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-material-teal">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-600 uppercase mb-1">Nhập lại MK</label>
+                        <input type="password" id="reg-confirm" required placeholder="••••••••"
+                            class="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-material-teal">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-material-teal hover:bg-emerald-600 text-white font-bold py-2.5 rounded-lg shadow-md transition-all text-sm uppercase tracking-wider">
+                    Khởi tạo Trang trại Mới
+                </button>
+            </form>
+
+            <!-- PHÂN CÁCH MẠNG XÃ HỘI -->
+            <div class="relative flex py-5 items-center">
+                <div class="flex-grow border-t border-gray-200"></div>
+                <span class="flex-shrink mx-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Hoặc tiếp tục với</span>
+                <div class="flex-grow border-t border-gray-200"></div>
+            </div>
+
+            <!-- NÚT ĐĂNG NHẬP GOOGLE & FACEBOOK -->
+            <div class="grid grid-cols-2 gap-3">
+                <button type="button" onclick="moModalOAuth('Google')"
+                    class="flex items-center justify-center py-2.5 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all text-xs font-bold text-gray-700 shadow-xs">
+                    <i class="fa-brands fa-google text-rose-500 text-base mr-2"></i> Google
+                </button>
+                <button type="button" onclick="moModalOAuth('Facebook')"
+                    class="flex items-center justify-center py-2.5 px-4 border border-blue-600 bg-blue-600 hover:bg-blue-700 transition-all text-xs font-bold text-white shadow-xs">
+                    <i class="fa-brands fa-facebook-f text-base mr-2"></i> Facebook
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL XÁC THỰC NHANH GOOGLE / FACEBOOK -->
+    <div id="oauth-modal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-fade-in">
+            <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 id="oauth-title" class="text-sm font-black text-gray-800 flex items-center"></h3>
+                <button onclick="dongModalOAuth()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="xacNhanOAuth(event)" class="p-5 space-y-4">
+                <input type="hidden" id="oauth-provider">
+                <p class="text-xs text-gray-500">Nhập địa chỉ tài khoản để liên kết hoặc khởi tạo không gian trang trại mới hoàn toàn trống:</p>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Email tài khoản</label>
+                    <input type="email" id="oauth-email" required placeholder="tenban@gmail.com"
+                        class="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-material-purple">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Tên hiển thị</label>
+                    <input type="text" id="oauth-name" required placeholder="Họ và tên của bạn"
+                        class="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-material-purple">
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="dongModalOAuth()" class="px-4 py-2 border border-gray-300 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50">Hủy</button>
+                    <button type="submit" class="px-4 py-2 bg-material-purple text-white rounded-lg text-xs font-bold hover:bg-material-purple_light shadow">Tiếp tục</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
+        // Khởi tạo danh sách người dùng mặc định (Giữ tài khoản Admin gốc có id = 1 sở hữu 4 chuồng cũ)
+        function layDanhSachUsers() {
+            const raw = localStorage.getItem("vigga_registered_users");
+            if (raw) return JSON.parse(raw);
+            const defaultUsers = [
+                { id: 1, username: "admin", password: "123", fullName: "Phan Duy Hoàng", role: "Admin" }
+            ];
+            localStorage.setItem("vigga_registered_users", JSON.stringify(defaultUsers));
+            return defaultUsers;
+        }
 
-            const btn = document.getElementById('loginBtn');
-            const errorMsg = document.getElementById('errorMsg');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> ĐANG KIỂM TRA...';
-            errorMsg.classList.add('hidden');
+        function hienThongBao(msg, isError = true) {
+            const box = document.getElementById("auth-alert");
+            box.className = isError
+                ? "mb-4 p-3 rounded-lg text-xs font-bold flex items-center bg-rose-50 text-rose-600 border border-rose-200"
+                : "mb-4 p-3 rounded-lg text-xs font-bold flex items-center bg-emerald-50 text-emerald-700 border border-emerald-200";
+            box.innerHTML = `<i class="fa-solid ${isError ? 'fa-circle-exclamation' : 'fa-circle-check'} mr-2"></i> ${msg}`;
+        }
 
-            const u = document.getElementById('username').value.trim();
-            const p = document.getElementById('password').value.trim();
+        function switchAuthTab(tab) {
+            document.getElementById("auth-alert").classList.add("hidden");
+            const btnLogin = document.getElementById("tab-btn-login");
+            const btnReg = document.getElementById("tab-btn-register");
+            const formLogin = document.getElementById("form-login");
+            const formReg = document.getElementById("form-register");
 
-            try {
-                const response = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username: u,
-                        password: p
-                    })
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    localStorage.setItem('currentUser', JSON.stringify(result.data));
-                    window.location.href = 'QuanLy.html';
-                } else {
-                    btn.innerText = 'XÁC THỰC TRUY CẬP';
-                    errorMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> Sai thông tin xác thực!';
-                    errorMsg.classList.remove('hidden');
-                }
-            } catch (err) {
-                console.error(err);
-                btn.innerText = 'XÁC THỰC TRUY CẬP';
-                errorMsg.innerText = "Lỗi kết nối đến máy chủ Backend!";
-                errorMsg.classList.remove('hidden');
+            if (tab === 'login') {
+                btnLogin.className = "py-3.5 text-material-purple border-b-2 border-material-purple bg-white transition-all";
+                btnReg.className = "py-3.5 text-gray-400 hover:text-gray-600 transition-all";
+                formLogin.classList.remove("hidden");
+                formReg.classList.add("hidden");
+            } else {
+                btnReg.className = "py-3.5 text-material-teal border-b-2 border-material-teal bg-white transition-all";
+                btnLogin.className = "py-3.5 text-gray-400 hover:text-gray-600 transition-all";
+                formReg.classList.remove("hidden");
+                formLogin.classList.add("hidden");
             }
-        });
+        }
+
+        // 1. XỬ LÝ ĐĂNG NHẬP
+        async function xuLyDangNhap(e) {
+            e.preventDefault();
+            const u = document.getElementById("login-username").value.trim();
+            const p = document.getElementById("login-password").value;
+
+            // Thử gọi API Backend C# trước
+            try {
+                const res = await fetch("/api/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                if (res.ok) {
+                    const userFromServer = await res.json();
+                    if (!userFromServer.id) userFromServer.id = (u.toLowerCase() === "admin") ? 1 : 2;
+                    localStorage.setItem("currentUser", JSON.stringify(userFromServer));
+                    window.location.href = "QuanLy.html";
+                    return;
+                }
+            } catch (err) {}
+
+            // Kiểm tra trong danh sách tài khoản đã đăng ký
+            const users = layDanhSachUsers();
+            const found = users.find(item => item.username.toLowerCase() === u.toLowerCase() && item.password === p);
+            if (found) {
+                localStorage.setItem("currentUser", JSON.stringify(found));
+                window.location.href = "QuanLy.html";
+            } else {
+                hienThongBao("Tài khoản hoặc mật khẩu không chính xác!");
+            }
+        }
+
+        // 2. XỬ LÝ ĐĂNG KÝ TÀI KHOẢN MỚI (Vào trang quản lý sẽ trống 100% chuồng trại)
+        function xuLyDangKy(e) {
+            e.preventDefault();
+            const fullName = document.getElementById("reg-fullname").value.trim();
+            const username = document.getElementById("reg-username").value.trim();
+            const password = document.getElementById("reg-password").value;
+            const confirm = document.getElementById("reg-confirm").value;
+
+            if (password !== confirm) {
+                hienThongBao("Mật khẩu xác nhận không khớp!");
+                return;
+            }
+
+            const users = layDanhSachUsers();
+            if (users.some(item => item.username.toLowerCase() === username.toLowerCase())) {
+                hienThongBao("Tên tài khoản / Email này đã được sử dụng!");
+                return;
+            }
+
+            // Tạo UserId mới duy nhất (> 1) để tách biệt hoàn toàn với 4 chuồng của Admin (id = 1)
+            const newUser = {
+                id: Math.floor(100 + Math.random() * 899),
+                username: username,
+                password: password,
+                fullName: fullName,
+                role: "Owner"
+            };
+
+            users.push(newUser);
+            localStorage.setItem("vigga_registered_users", JSON.stringify(users));
+            localStorage.setItem("currentUser", JSON.stringify(newUser));
+
+            hienThongBao("Tạo tài khoản thành công! Đang khởi tạo trang trại trống...", false);
+            setTimeout(() => {
+                window.location.href = "QuanLy.html";
+            }, 700);
+        }
+
+        // 3. ĐĂNG NHẬP / ĐĂNG KÝ BẰNG GOOGLE HOẶC FACEBOOK
+        function moModalOAuth(provider) {
+            document.getElementById("oauth-provider").value = provider;
+            const titleEl = document.getElementById("oauth-title");
+            if (provider === "Google") {
+                titleEl.innerHTML = '<i class="fa-brands fa-google text-rose-500 mr-2 text-lg"></i> Tiếp tục với Google';
+            } else {
+                titleEl.innerHTML = '<i class="fa-brands fa-facebook text-blue-600 mr-2 text-lg"></i> Tiếp tục với Facebook';
+            }
+            document.getElementById("oauth-modal").classList.remove("hidden");
+        }
+
+        function dongModalOAuth() {
+            document.getElementById("oauth-modal").classList.add("hidden");
+        }
+
+        function xacNhanOAuth(e) {
+            e.preventDefault();
+            const provider = document.getElementById("oauth-provider").value;
+            const email = document.getElementById("oauth-email").value.trim().toLowerCase();
+            const name = document.getElementById("oauth-name").value.trim();
+
+            const users = layDanhSachUsers();
+            let user = users.find(u => u.username.toLowerCase() === email);
+
+            // Nếu email Google/Facebook này lần đầu đăng nhập -> Tạo UserId mới với dữ liệu chuồng trống
+            if (!user) {
+                user = {
+                    id: Math.floor(100 + Math.random() * 899),
+                    username: email,
+                    password: "oauth_login",
+                    fullName: name,
+                    role: provider + "_User"
+                };
+                users.push(user);
+                localStorage.setItem("vigga_registered_users", JSON.stringify(users));
+            }
+
+            localStorage.setItem("currentUser", JSON.stringify(user));
+            window.location.href = "QuanLy.html";
+        }
     </script>
 </body>
 

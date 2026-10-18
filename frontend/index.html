@@ -118,17 +118,17 @@
             <!-- PHÂN CÁCH MẠNG XÃ HỘI -->
             <div class="relative flex py-5 items-center">
                 <div class="flex-grow border-t border-gray-200"></div>
-                <span class="flex-shrink mx-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Hoặc tiếp tục với</span>
+                <span class="flex-shrink mx-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Hoặc đăng nhập thật với</span>
                 <div class="flex-grow border-t border-gray-200"></div>
             </div>
 
-            <!-- NÚT ĐĂNG NHẬP GOOGLE & FACEBOOK -->
+            <!-- NÚT ĐĂNG NHẬP GOOGLE & FACEBOOK THẬT QUA FIREBASE OAUTH POPUP -->
             <div class="grid grid-cols-2 gap-3">
-                <button type="button" onclick="moModalOAuth('Google')"
+                <button type="button" onclick="dangNhapMXHThat('Google')"
                     class="flex items-center justify-center py-2.5 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all text-xs font-bold text-gray-700 shadow-xs">
                     <i class="fa-brands fa-google text-rose-500 text-base mr-2"></i> Google
                 </button>
-                <button type="button" onclick="moModalOAuth('Facebook')"
+                <button type="button" onclick="dangNhapMXHThat('Facebook')"
                     class="flex items-center justify-center py-2.5 px-4 border border-blue-600 bg-blue-600 hover:bg-blue-700 transition-all text-xs font-bold text-white shadow-xs">
                     <i class="fa-brands fa-facebook-f text-base mr-2"></i> Facebook
                 </button>
@@ -136,37 +136,111 @@
         </div>
     </div>
 
-    <!-- MODAL XÁC THỰC NHANH GOOGLE / FACEBOOK -->
-    <div id="oauth-modal" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-fade-in">
-            <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h3 id="oauth-title" class="text-sm font-black text-gray-800 flex items-center"></h3>
-                <button onclick="dongModalOAuth()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <form onsubmit="xacNhanOAuth(event)" class="p-5 space-y-4">
-                <input type="hidden" id="oauth-provider">
-                <p class="text-xs text-gray-500">Nhập địa chỉ tài khoản để liên kết hoặc khởi tạo không gian trang trại mới hoàn toàn trống:</p>
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Email tài khoản</label>
-                    <input type="email" id="oauth-email" required placeholder="tenban@gmail.com"
-                        class="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-material-purple">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Tên hiển thị</label>
-                    <input type="text" id="oauth-name" required placeholder="Họ và tên của bạn"
-                        class="w-full px-3.5 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-material-purple">
-                </div>
-                <div class="flex justify-end space-x-2 pt-2">
-                    <button type="button" onclick="dongModalOAuth()" class="px-4 py-2 border border-gray-300 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50">Hủy</button>
-                    <button type="submit" class="px-4 py-2 bg-material-purple text-white rounded-lg text-xs font-bold hover:bg-material-purple_light shadow">Tiếp tục</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <!-- TÍCH HỢP FIREBASE AUTHENTICATION SDK (BẬT CỬA SỔ GMAIL & FACEBOOK THẬT) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { 
+            getAuth, 
+            signInWithPopup, 
+            GoogleAuthProvider, 
+            FacebookAuthProvider 
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+        // =========================================================================
+        // ÔNG DÁN MÃ FIREBASE CONFIG CỦA ÔNG VÀO ĐÂY (Lấy từ console.firebase.google.com)
+        // =========================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDsTdaWC9f9mFZSH8G2hj6Jiw5_dBFKJcY",
+            authDomain: "iot-project-56ec9.firebaseapp.com",
+            projectId: "iot-project-56ec9",
+            appId: "1:49548625271:web:29966c7e21d0975fd48d72"
+        };
+
+        let auth = null;
+        try {
+            if (!firebaseConfig.apiKey.includes("DAN_API_KEY")) {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+            }
+        } catch (e) {
+            console.error("Lỗi khởi tạo Firebase:", e);
+        }
+
+        // Hàm băm cố định: Biến mỗi địa chỉ Gmail/Username thành 1 mã số UserId duy nhất (không bao giờ đổi)
+        window.taoUserIdCoDinhTuEmail = function(emailOrUsername) {
+            const clean = String(emailOrUsername).trim().toLowerCase();
+            if (clean === "admin") return 1; // Admin gốc luôn có id = 1 (sở hữu 4 chuồng gốc)
+            let hash = 0;
+            for (let i = 0; i < clean.length; i++) {
+                hash = ((hash << 5) - hash) + clean.charCodeAt(i);
+                hash |= 0;
+            }
+            return (Math.abs(hash) % 90000) + 100; // Ra số cố định từ 100 -> 90099
+        };
+
+        // Hàm gọi cửa sổ Popup chọn tài khoản Google / Facebook thật
+        window.dangNhapMXHThat = async function(providerName) {
+            if (!auth) {
+                window.hienThongBao("Bạn chưa dán mã firebaseConfig thật vào dòng 160 của file index.html!", true);
+                return;
+            }
+
+            try {
+                window.hienThongBao(`Đang mở cửa sổ xác thực ${providerName}...`, false);
+                const provider = providerName === "Google" 
+                    ? new GoogleAuthProvider() 
+                    : new FacebookAuthProvider();
+
+                // Luôn hiện bảng chọn tài khoản Gmail để ông dễ test nhiều Gmail khác nhau
+                if (providerName === "Google") {
+                    provider.setCustomParameters({ prompt: "select_account" });
+                }
+
+                // Bật Popup thật của Google / Facebook
+                const result = await signInWithPopup(auth, provider);
+                const fbUser = result.user;
+
+                const email = fbUser.email || fbUser.uid;
+                const fullName = fbUser.displayName || email.split("@")[0];
+                const fixedUserId = window.taoUserIdCoDinhTuEmail(email);
+
+                const loggedUser = {
+                    id: fixedUserId,
+                    username: email,
+                    fullName: fullName,
+                    photoURL: fbUser.photoURL || "",
+                    role: providerName.toUpperCase()
+                };
+
+                // Lưu vào danh sách và chuyển thẳng vào trang Quản lý
+                const users = window.layDanhSachUsers();
+                if (!users.some(u => u.username.toLowerCase() === email.toLowerCase())) {
+                    users.push({ ...loggedUser, password: "oauth_verified" });
+                    localStorage.setItem("vigga_registered_users", JSON.stringify(users));
+                }
+
+                localStorage.setItem("currentUser", JSON.stringify(loggedUser));
+                window.hienThongBao(`Xin chào ${fullName}! Đang vào hệ thống...`, false);
+                setTimeout(() => {
+                    window.location.href = "QuanLy.html";
+                }, 500);
+
+            } catch (error) {
+                console.error("Lỗi OAuth:", error);
+                if (error.code === "auth/popup-closed-by-user") {
+                    window.hienThongBao(`Bạn đã đóng cửa sổ đăng nhập ${providerName}.`, true);
+                } else if (error.code === "auth/unauthorized-domain") {
+                    window.hienThongBao("Tên miền chưa được cấp phép! Hãy thêm tên miền web vào mục Authorized domains trong Firebase Console.", true);
+                } else {
+                    window.hienThongBao(`Lỗi xác thực ${providerName}: ${error.message}`, true);
+                }
+            }
+        };
+    </script>
+
+    <!-- LOGIC ĐĂNG NHẬP & ĐĂNG KÝ TÀI KHOẢN TRỰC TIẾP -->
     <script>
-        // Khởi tạo danh sách người dùng mặc định (Giữ tài khoản Admin gốc có id = 1 sở hữu 4 chuồng cũ)
-        function layDanhSachUsers() {
+        window.layDanhSachUsers = function() {
             const raw = localStorage.getItem("vigga_registered_users");
             if (raw) return JSON.parse(raw);
             const defaultUsers = [
@@ -174,15 +248,15 @@
             ];
             localStorage.setItem("vigga_registered_users", JSON.stringify(defaultUsers));
             return defaultUsers;
-        }
+        };
 
-        function hienThongBao(msg, isError = true) {
+        window.hienThongBao = function(msg, isError = true) {
             const box = document.getElementById("auth-alert");
             box.className = isError
                 ? "mb-4 p-3 rounded-lg text-xs font-bold flex items-center bg-rose-50 text-rose-600 border border-rose-200"
                 : "mb-4 p-3 rounded-lg text-xs font-bold flex items-center bg-emerald-50 text-emerald-700 border border-emerald-200";
             box.innerHTML = `<i class="fa-solid ${isError ? 'fa-circle-exclamation' : 'fa-circle-check'} mr-2"></i> ${msg}`;
-        }
+        };
 
         function switchAuthTab(tab) {
             document.getElementById("auth-alert").classList.add("hidden");
@@ -204,13 +278,11 @@
             }
         }
 
-        // 1. XỬ LÝ ĐĂNG NHẬP
         async function xuLyDangNhap(e) {
             e.preventDefault();
             const u = document.getElementById("login-username").value.trim();
             const p = document.getElementById("login-password").value;
 
-            // Thử gọi API Backend C# trước
             try {
                 const res = await fetch("/api/auth/login", {
                     method: "POST",
@@ -219,25 +291,24 @@
                 });
                 if (res.ok) {
                     const userFromServer = await res.json();
-                    if (!userFromServer.id) userFromServer.id = (u.toLowerCase() === "admin") ? 1 : 2;
+                    userFromServer.id = window.taoUserIdCoDinhTuEmail(u);
                     localStorage.setItem("currentUser", JSON.stringify(userFromServer));
                     window.location.href = "QuanLy.html";
                     return;
                 }
             } catch (err) {}
 
-            // Kiểm tra trong danh sách tài khoản đã đăng ký
-            const users = layDanhSachUsers();
+            const users = window.layDanhSachUsers();
             const found = users.find(item => item.username.toLowerCase() === u.toLowerCase() && item.password === p);
             if (found) {
+                found.id = window.taoUserIdCoDinhTuEmail(found.username);
                 localStorage.setItem("currentUser", JSON.stringify(found));
                 window.location.href = "QuanLy.html";
             } else {
-                hienThongBao("Tài khoản hoặc mật khẩu không chính xác!");
+                window.hienThongBao("Tài khoản hoặc mật khẩu không chính xác!");
             }
         }
 
-        // 2. XỬ LÝ ĐĂNG KÝ TÀI KHOẢN MỚI (Vào trang quản lý sẽ trống 100% chuồng trại)
         function xuLyDangKy(e) {
             e.preventDefault();
             const fullName = document.getElementById("reg-fullname").value.trim();
@@ -246,19 +317,18 @@
             const confirm = document.getElementById("reg-confirm").value;
 
             if (password !== confirm) {
-                hienThongBao("Mật khẩu xác nhận không khớp!");
+                window.hienThongBao("Mật khẩu xác nhận không khớp!");
                 return;
             }
 
-            const users = layDanhSachUsers();
+            const users = window.layDanhSachUsers();
             if (users.some(item => item.username.toLowerCase() === username.toLowerCase())) {
-                hienThongBao("Tên tài khoản / Email này đã được sử dụng!");
+                window.hienThongBao("Tên tài khoản / Email này đã được sử dụng!");
                 return;
             }
 
-            // Tạo UserId mới duy nhất (> 1) để tách biệt hoàn toàn với 4 chuồng của Admin (id = 1)
             const newUser = {
-                id: Math.floor(100 + Math.random() * 899),
+                id: window.taoUserIdCoDinhTuEmail(username),
                 username: username,
                 password: password,
                 fullName: fullName,
@@ -269,52 +339,10 @@
             localStorage.setItem("vigga_registered_users", JSON.stringify(users));
             localStorage.setItem("currentUser", JSON.stringify(newUser));
 
-            hienThongBao("Tạo tài khoản thành công! Đang khởi tạo trang trại trống...", false);
+            window.hienThongBao("Tạo tài khoản thành công! Đang khởi tạo trang trại trống...", false);
             setTimeout(() => {
                 window.location.href = "QuanLy.html";
-            }, 700);
-        }
-
-        // 3. ĐĂNG NHẬP / ĐĂNG KÝ BẰNG GOOGLE HOẶC FACEBOOK
-        function moModalOAuth(provider) {
-            document.getElementById("oauth-provider").value = provider;
-            const titleEl = document.getElementById("oauth-title");
-            if (provider === "Google") {
-                titleEl.innerHTML = '<i class="fa-brands fa-google text-rose-500 mr-2 text-lg"></i> Tiếp tục với Google';
-            } else {
-                titleEl.innerHTML = '<i class="fa-brands fa-facebook text-blue-600 mr-2 text-lg"></i> Tiếp tục với Facebook';
-            }
-            document.getElementById("oauth-modal").classList.remove("hidden");
-        }
-
-        function dongModalOAuth() {
-            document.getElementById("oauth-modal").classList.add("hidden");
-        }
-
-        function xacNhanOAuth(e) {
-            e.preventDefault();
-            const provider = document.getElementById("oauth-provider").value;
-            const email = document.getElementById("oauth-email").value.trim().toLowerCase();
-            const name = document.getElementById("oauth-name").value.trim();
-
-            const users = layDanhSachUsers();
-            let user = users.find(u => u.username.toLowerCase() === email);
-
-            // Nếu email Google/Facebook này lần đầu đăng nhập -> Tạo UserId mới với dữ liệu chuồng trống
-            if (!user) {
-                user = {
-                    id: Math.floor(100 + Math.random() * 899),
-                    username: email,
-                    password: "oauth_login",
-                    fullName: name,
-                    role: provider + "_User"
-                };
-                users.push(user);
-                localStorage.setItem("vigga_registered_users", JSON.stringify(users));
-            }
-
-            localStorage.setItem("currentUser", JSON.stringify(user));
-            window.location.href = "QuanLy.html";
+            }, 600);
         }
     </script>
 </body>

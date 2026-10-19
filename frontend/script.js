@@ -100,28 +100,19 @@ function layUserIdHienTai() {
   return 1;
 }
 
-// Hàm lọc chuồng theo tài khoản đang đăng nhập (Fix chuẩn 100%)
+// Hỏi dữ liệu chuồng thuộc về đúng UserId đang đăng nhập
 function locChuongTheoUser(allBarns) {
-  const uid = layUserIdHienTai(); // Lấy ID tài khoản hiện tại (ví dụ: 1)
-  
-  return allBarns.filter(c => {
+  const uid = layUserIdHienTai();
+  return allBarns.filter((c) => {
     const prefix = String(c.prefix || c.Prefix || "");
-    const barnUserId = c.userId !== undefined ? c.userId : c.UserId;
-    
-    // 1. Nếu có trường UserId rõ ràng trong database
+    const barnUserId = c.userId ?? c.UserId;
     if (barnUserId !== undefined && barnUserId !== null) {
-      return Number(barnUserId) === Number(uid);
+      return Number(barnUserId) === uid;
     }
-    
-    // 2. Nếu kiểm tra qua tiền tố Prefix (VD: u1_t378)
-    if (uid === 1 && (!prefix || prefix.startsWith("u1_") || !prefix.startsWith("u"))) {
-      return true; // Tài khoản admin (id = 1) lấy cả chuồng u1_ lẫn chuồng cũ không có tiền tố u
-    }
-    
-    if (prefix.startsWith(`u${uid}_`)) {
-      return true; // Các tài khoản khác lấy đúng chuồng có tiền tố u{uid}_ của mình
-    }
-    
+    // Nếu Backend C# chưa trả cột UserId thì đọc mã u{uid}_ trong Prefix
+    if (prefix.startsWith(`u${uid}_`)) return true;
+    // Các chuồng cũ (t378, t756...) chưa có tiền tố u_ thì thuộc về Admin gốc (uid = 1)
+    if (uid === 1 && !prefix.startsWith("u")) return true;
     return false;
   });
 }

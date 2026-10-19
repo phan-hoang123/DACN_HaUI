@@ -187,9 +187,15 @@
 
             try {
                 window.hienThongBao(`Đang mở cửa sổ xác thực ${providerName}...`, false);
-                const provider = providerName === "Google" 
-                    ? new GoogleAuthProvider() 
-                    : new FacebookAuthProvider();
+                let provider;
+if (providerName === "Google") {
+    provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+} else {
+    provider = new FacebookAuthProvider();
+    // Thêm dòng này để Facebook không bắt buộc trả về email nếu tài khoản dùng số điện thoại
+    provider.addScope('public_profile');
+}
 
                 // Luôn hiện bảng chọn tài khoản Gmail để ông dễ test nhiều Gmail khác nhau
                 if (providerName === "Google") {

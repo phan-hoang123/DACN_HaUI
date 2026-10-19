@@ -210,9 +210,11 @@ async function luuChuong(event) {
 
   try {
     if (id) {
-      // CẬP NHẬT: GỌI PUT
-      payload.id = parseInt(id); // Nếu có ID thì gửi PUT để cập nhật
-      payload.prefix = danhSachChuong.find((c) => c.id == id).prefix; // Lấy prefix cũ để giữ nguyên
+      const existingBarn = danhSachChuong.find((c) => c.id == id);
+      payload.id = parseInt(id);
+      payload.prefix = existingBarn.prefix;
+      payload.userId = existingBarn.userId ?? layUserIdHienTai();
+      payload.cameraUrl = existingBarn.cameraUrl ?? "";
 
       await fetch(`/api/barn/${id}`, { 
         method: "PUT",
@@ -716,7 +718,7 @@ setInterval(async () => {
         const isQuaNong = nhietDoVal >= nguongNong;
         const isKhiDocCao = nh3Val >= nguongKhi;
         const isQuatBat = isQuaNong || isKhiDocCao;
-        const isBomPhunSuongBat = isQuaNong;
+        const isBomPhunSuongBat = nhietDoVal >= (nguongNong + 1.0); // Bơm chỉ bật khi cao hơn ngưỡng quạt 1°C
 
         if (isQuatBat) soQuatDangBat++;
         if (isBomPhunSuongBat) soBomDangBat++;
@@ -920,7 +922,7 @@ setInterval(async () => {
 
       const tempStatus = document.getElementById("kpi-temp-status");
       if (tempStatus) {
-        if (Number(tbNhiet) >= 30) {
+        if (soQuatDangBat > 0 || soBomDangBat > 0) {
           tempStatus.className = "text-[10px] text-rose-600 font-bold mt-2 flex items-center animate-pulse";
           tempStatus.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> Cảnh báo: Đang bật làm mát!';
         } else {

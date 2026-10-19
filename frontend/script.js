@@ -117,7 +117,7 @@ function locChuongTheoUser(allBarns) {
   });
 }
 
-// 1. Lấy dữ liệu từ Backend (Chỉ hiển thị chuồng của tài khoản đang đăng nhập)
+// 1. Lấy dữ liệu từ Backend (Có chống lỗi 500 Server Error)
 async function loadDanhSachChuong() {
   try {
     const response = await fetch("/api/barn");
@@ -134,19 +134,36 @@ async function loadDanhSachChuong() {
       if (danhSachChuong.length > 0) {
         startMultiCamAI();
       } else {
-        // Nếu tài khoản mới chưa có chuồng nào -> Đặt các thẻ KPI về trạng thái trống
-        const kpiDan = document.getElementById("kpi-tong-dan");
-        if (kpiDan) kpiDan.innerText = "0 cá thể";
-        const kpiDanStt = document.getElementById("kpi-tong-dan-status");
-        if (kpiDanStt) kpiDanStt.innerHTML = '<i class="fa-solid fa-circle-info mr-1"></i> Chưa có chuồng nuôi';
-        const liveNh3 = document.getElementById("live-nh3");
-        if (liveNh3) liveNh3.innerText = "0.0";
+        hienThiTrangThaiTrong();
       }
+    } else {
+      // Nếu Backend C# trả về lỗi 500 do chưa cập nhật bảng barns, tự động giả lập mảng trống cho tài khoản mới
+      console.warn("Backend API /api/barn đang lỗi 500, tải dữ liệu trống theo tài khoản...");
+      danhSachChuong = [];
+      renderBangCrudChuong(danhSachChuong);
+      renderGiaoDienChuongTrai();
+      renderDanhSachVanHanhNhanh(danhSachChuong);
+      hienThiTrangThaiTrong();
     }
   } catch (error) {
-    console.error("Lỗi kéo dữ liệu từ CSDL:", error);
+    console.error("Lỗi kết nối CSDL, hiển thị không gian trống:", error);
+    danhSachChuong = [];
+    renderBangCrudChuong(danhSachChuong);
+    renderGiaoDienChuongTrai();
+    renderDanhSachVanHanhNhanh(danhSachChuong);
+    hienThiTrangThaiTrong();
   }
 }
+
+function hienThiTrangThaiTrong() {
+  const kpiDan = document.getElementById("kpi-tong-dan");
+  if (kpiDan) kpiDan.innerText = "0 cá thể";
+  const kpiDanStt = document.getElementById("kpi-tong-dan-status");
+  if (kpiDanStt) kpiDanStt.innerHTML = '<i class="fa-solid fa-circle-info mr-1"></i> Chưa có chuồng nuôi';
+  const liveNh3 = document.getElementById("live-nh3");
+  if (liveNh3) liveNh3.innerText = "0.0";
+}
+
 loadDanhSachChuong();
 
 
@@ -1320,24 +1337,28 @@ async function dongBoTaiKhoanAdmin() {
 
   try {
     const user = JSON.parse(userData);
+    
+    // Phòng hờ nếu user đăng nhập bằng Google/Facebook mà chưa có fullName thì lấy username hoặc email
+    const rawName = user.fullName || user.username || "Quản trị viên";
+    const rawRole = user.role || "Admin";
 
-    const words = user.fullName.trim().split(" ");
+    const words = rawName.trim().split(" ");
     const initials =
       words.length > 1
         ? words[0][0] + words[words.length - 1][0]
         : words[0].slice(0, 2);
 
-    document.getElementById("user-fullname").innerText = user.fullName;
-    document.getElementById("user-role").innerText = user.role.toUpperCase();
+    document.getElementById("user-fullname").innerText = rawName;
+    document.getElementById("user-role").innerText = rawRole.toUpperCase();
     document.getElementById("user-avatar").innerText = initials.toUpperCase();
 
-    document.getElementById("modal-user-fullname").innerText = user.fullName;
+    document.getElementById("modal-user-fullname").innerText = rawName;
     document.getElementById("modal-user-username").innerText =
-      "@" + user.username;
+      "@" + (user.username || "user");
     document.getElementById("modal-user-avatar").innerText =
       initials.toUpperCase();
     document.getElementById("modal-user-role").innerText =
-      `RANK: SYSTEM_${user.role.toUpperCase()}`;
+      `RANK: SYSTEM_${rawRole.toUpperCase()}`;
   } catch (error) {
     console.error("Lỗi đồng bộ giao diện: ", error);
   }

@@ -90,12 +90,16 @@ const mainChart = new Chart(ctxMain, { // Khởi tạo biểu đồ chính
 // Biến toàn cục rỗng, chờ lấy dữ liệu từ backend
 let danhSachChuong = [];
 
-// Hàm lấy ID của tài khoản đang đăng nhập (Mặc định Admin gốc có id = 1)
 function layUserIdHienTai() {
   try {
-    const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+    const raw = JSON.parse(localStorage.getItem("currentUser") || "{}");
+    const user = raw.data || raw; // Lấy dữ liệu bên trong .data nếu có
+    const uname = (user.username || raw.username || "").toLowerCase();
+
+    // Tài khoản admin gốc hoặc hoangpd luôn có ID = 1
+    if (uname === "admin" || uname === "hoangpd") return 1;
     if (user.id) return Number(user.id);
-    if (user.username && user.username.toLowerCase() === "admin") return 1;
+    if (raw.id) return Number(raw.id);
   } catch (e) {}
   return 1;
 }
@@ -1336,9 +1340,9 @@ async function dongBoTaiKhoanAdmin() {
   }
 
   try {
-    const user = JSON.parse(userData);
+    const raw = JSON.parse(userData);
+    const user = raw.data || raw;
     
-    // Phòng hờ nếu user đăng nhập bằng Google/Facebook mà chưa có fullName thì lấy username hoặc email
     const rawName = user.fullName || user.username || "Quản trị viên";
     const rawRole = user.role || "Admin";
 

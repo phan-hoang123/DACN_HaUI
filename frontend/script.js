@@ -739,7 +739,7 @@ setInterval(async () => {
         const isQuaNong = nhietDoVal >= nguongNong;
         const isKhiDocCao = nh3Val >= nguongKhi;
         const isQuatBat = isQuaNong || isKhiDocCao;
-        const isBomPhunSuongBat = nhietDoVal >= (nguongNong + 1.0); // Bơm chỉ bật khi cao hơn ngưỡng quạt 1°C
+        const isBomPhunSuongBat = isQuaNong; // Bơm chỉ bật khi cao hơn ngưỡng quạt 1°C
 
         if (isQuatBat) soQuatDangBat++;
         if (isBomPhunSuongBat) soBomDangBat++;

@@ -495,6 +495,22 @@
                     <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wider">Định danh vật nuôi</label>
                     <input type="text" id="chuongLoai" required class="w-full border border-gray-300 rounded px-3.5 py-2 text-base sm:text-sm focus:outline-none focus:border-material-purple focus:ring-1 focus:ring-material-purple transition-shadow" placeholder="Ví dụ: Bò thịt (Khu A)">
                 </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wider">
+                        <i class="fa-solid fa-video mr-1 text-material-pink"></i>Nguồn / Link Camera AI
+                    </label>
+                    <input type="text" id="chuongCameraUrl"
+                        class="w-full border border-gray-300 rounded px-3.5 py-2 text-base sm:text-sm focus:outline-none focus:border-material-purple focus:ring-1 focus:ring-material-purple font-mono"
+                        placeholder="Nhập link RTSP, HTTP, tên file .mp4, WEBCAM hoặc EZVIZ_STREAM">
+                    <div class="flex flex-wrap gap-1.5 mt-1.5">
+                        <span class="text-[10px] text-gray-400 self-center mr-1">Chọn nhanh:</span>
+                        <button type="button" onclick="document.getElementById('chuongCameraUrl').value='EZVIZ_STREAM'" class="text-[10px] bg-rose-50 text-rose-600 border border-rose-200 px-2 py-0.5 rounded font-bold hover:bg-rose-100">Camera EZVIZ</button>
+                        <button type="button" onclick="document.getElementById('chuongCameraUrl').value='WEBCAM'" class="text-[10px] bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded font-bold hover:bg-blue-100">Webcam Máy tính/Đ.Thoại</button>
+                        <button type="button" onclick="document.getElementById('chuongCameraUrl').value='video_lon.mp4'" class="text-[10px] bg-gray-100 text-gray-600 border border-gray-200 px-2 py-0.5 rounded font-bold hover:bg-gray-200">Video mô phỏng</button>
+                    </div>
+                </div>
+                
                 <div class="grid grid-cols-2 gap-3 sm:gap-5 bg-gray-50 p-3 sm:p-4 rounded border border-gray-100">
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Sai số Nhiệt (°C)</label>

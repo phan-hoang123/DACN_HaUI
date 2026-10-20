@@ -195,17 +195,33 @@ async function xoaChuong(id) {
   }
 }
 
+// Hàm phụ trợ lưu/đọc nhanh link Camera trên trình duyệt (đảm bảo chạy ngay cả khi Backend C# chưa build lại)
+function layCameraUrlCuaChuong(chuong) {
+  const localMap = JSON.parse(localStorage.getItem("vigga_camera_urls") || "{}");
+  return chuong.cameraUrl || chuong.CameraUrl || localMap[chuong.id] || (chuong.id === 1 ? "EZVIZ_STREAM" : "video_lon.mp4");
+}
+
+function luuCameraUrlLocal(id, url) {
+  if (!id) return;
+  const localMap = JSON.parse(localStorage.getItem("vigga_camera_urls") || "{}");
+  localMap[id] = url;
+  localStorage.setItem("vigga_camera_urls", JSON.stringify(localMap));
+}
+
 // 3. LƯU CHUỒNG (GỌI API POST HOẶC PUT REAL)
 async function luuChuong(event) {
   event.preventDefault();
 
-  const id = document.getElementById("chuongId").value; // Lấy ID chuồng (nếu có) để xác định là thêm mới hay sửa
-  const payload = { // Dữ liệu gửi lên API
+  const id = document.getElementById("chuongId").value;
+  const cameraUrlInput = (document.getElementById("chuongCameraUrl")?.value || "").trim();
+
+  const payload = {
     loai: document.getElementById("chuongLoai").value,
     lechNhietDo: parseFloat(document.getElementById("chuongLechNhiet").value),
     lechNh3: parseFloat(document.getElementById("chuongLechNh3").value),
     nguongNong: parseFloat(document.getElementById("chuongNguongNong").value),
     nguongNh3: parseFloat(document.getElementById("chuongNguongNh3").value),
+    cameraUrl: cameraUrlInput,
   };
 
   try {
@@ -214,29 +230,34 @@ async function luuChuong(event) {
       payload.id = parseInt(id);
       payload.prefix = existingBarn.prefix;
       payload.userId = existingBarn.userId ?? layUserIdHienTai();
-      payload.cameraUrl = existingBarn.cameraUrl ?? "";
 
-      await fetch(`/api/barn/${id}`, { 
+      luuCameraUrlLocal(id, cameraUrlInput);
+
+      await fetch(`/api/barn/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload), // Gửi dữ liệu JSON lên API
+        body: JSON.stringify(payload),
       });
-      addSystemLog( // Ghi log hệ thống
-        `HỆ THỐNG: Quản trị viên đã hiệu chỉnh lại thông số ngưỡng cho chuồng ID-${id}.`,
-        "SYSTEM",
+      addSystemLog(
+        `HỆ THỐNG: Quản trị viên đã cập nhật cấu hình & Camera cho chuồng ID-${id}.`,
+        "SYSTEM"
       );
     } else {
       const uid = layUserIdHienTai();
       payload.userId = uid;
       payload.prefix = `u${uid}_t` + Math.floor(Math.random() * 1000);
-      await fetch("/api/barn", {
+      const res = await fetch("/api/barn", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+      if (res.ok) {
+        const created = await res.json();
+        if (created && created.id) luuCameraUrlLocal(created.id, cameraUrlInput);
+      }
       addSystemLog(
         `HỆ THỐNG: Đã mở rộng quy mô, đấu nối thành công chuồng mới (${payload.loai}).`,
-        "ACCOUNTING",
+        "ACCOUNTING"
       );
     }
 
@@ -430,27 +451,27 @@ function timKiemChuong() {
   renderBangCrudChuong(filteredData);
 }
 
-// 4. Bật/Tắt Hộp thoại Modal
 function moModalChuong(id = null) {
-  document.getElementById("modal-crud-chuong").classList.remove("hidden"); // Hiển thị modal
+  document.getElementById("modal-crud-chuong").classList.remove("hidden");
+  const camInput = document.getElementById("chuongCameraUrl");
 
   if (id) {
-    // Trạng thái SỬA (Update)
     document.getElementById("modal-crud-title").innerHTML =
-      '<i class="fa-solid fa-pen-to-square mr-2 text-blue-600"></i>CẬP NHẬT THÔNG TIN CHUỒNG'; // Cập nhật tiêu đề modal
-    const c = danhSachChuong.find((item) => item.id === id); // Tìm chuồng trại theo ID để điền dữ liệu vào form
+      '<i class="fa-solid fa-pen-to-square mr-2 text-blue-600"></i>CẬP NHẬT THÔNG TIN CHUỒNG';
+    const c = danhSachChuong.find((item) => item.id === id);
     document.getElementById("chuongId").value = c.id;
     document.getElementById("chuongLoai").value = c.loai;
     document.getElementById("chuongLechNhiet").value = c.lechNhietDo;
     document.getElementById("chuongLechNh3").value = c.lechNh3;
     document.getElementById("chuongNguongNong").value = c.nguongNong;
     document.getElementById("chuongNguongNh3").value = c.nguongNh3;
+    if (camInput) camInput.value = layCameraUrlCuaChuong(c);
   } else {
-    // Trạng thái thêm mới
     document.getElementById("modal-crud-title").innerHTML =
       '<i class="fa-solid fa-plus mr-2 text-emerald-600"></i>THÊM CHUỒNG MỚI';
-    document.getElementById("formChuong").reset(); // Reset form về mặc định
-    document.getElementById("chuongId").value = ""; // Reset ID về rỗng
+    document.getElementById("formChuong").reset();
+    document.getElementById("chuongId").value = "";
+    if (camInput) camInput.value = "video_lon.mp4";
   }
 }
 
@@ -1000,19 +1021,23 @@ function renderAICameraGrid() {
   if (!grid) return;
 
   let html = "";
-  aiCameras = []; // Reset bộ nhớ AI
+  aiCameras = [];
 
   danhSachChuong.forEach((chuong) => {
     const maCam = chuong.id > 9 ? chuong.id : "0" + chuong.id;
+    const camSource = layCameraUrlCuaChuong(chuong);
 
     html += `
       <div class="bg-white rounded-lg sm:rounded-none border border-slate-200 shadow-sm overflow-hidden flex flex-col">
           <div class="bg-slate-900 px-3 py-2 sm:p-3 flex justify-between items-center border-b-2 sm:border-b-4 border-slate-700">
               <span class="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-rose-600 text-white text-[8px] sm:text-[9px] font-black rounded-none animate-pulse tracking-widest uppercase border border-rose-500">■ LIVE REC</span>
-              <span class="text-emerald-400 text-[9px] sm:text-[10px] font-bold font-mono tracking-wider truncate ml-2">CAM_${maCam} / ${chuong.loai.toUpperCase()}</span>
+              <div class="flex items-center space-x-2 truncate ml-2">
+                  <span class="text-emerald-400 text-[9px] sm:text-[10px] font-bold font-mono tracking-wider truncate">CAM_${maCam} / ${chuong.loai.toUpperCase()}</span>
+                  <button onclick="moModalChuong(${chuong.id})" class="text-slate-400 hover:text-white text-xs" title="Đổi nguồn Camera"><i class="fa-solid fa-gear"></i></button>
+              </div>
           </div>
           <div class="relative bg-black aspect-video overflow-hidden border-b border-slate-200">
-              <video id="webcam-${chuong.id}" autoplay playsinline muted class="w-full h-full object-cover opacity-90"></video>
+              <video id="webcam-${chuong.id}" autoplay playsinline muted crossorigin="anonymous" class="w-full h-full object-cover opacity-90"></video>
               <canvas id="canvas-${chuong.id}" class="absolute top-0 left-0 w-full h-full object-cover pointer-events-none"></canvas>
           </div>
           <div class="p-2.5 sm:p-4 grid grid-cols-2 gap-2.5 sm:gap-4 bg-slate-50">
@@ -1027,9 +1052,10 @@ function renderAICameraGrid() {
           </div>
       </div>
     `;
-    // Thêm biến lastCount để lưu số lượng cá thể đếm được của từng camera
+
     aiCameras.push({
       id: chuong.id,
+      cameraUrl: camSource,
       video: null,
       canvas: null,
       ctx: null,
@@ -1062,7 +1088,7 @@ async function startMultiCamAI() {
   napVideoChoCacCamera();
 }
 
-// 3. Hàm nạp Video và nổ máy AI cho TẤT CẢ camera đang có
+// 3. Hàm nạp Video và nổ máy AI theo đúng nguồn Camera người dùng đã nhập
 function napVideoChoCacCamera() {
   aiCameras.forEach((cam, index) => {
     cam.video = document.getElementById(`webcam-${cam.id}`);
@@ -1073,8 +1099,10 @@ function napVideoChoCacCamera() {
     cam.canvas.width = 640;
     cam.canvas.height = 360;
 
-    // NẾU LÀ CHUỒNG 1 (CAM 01): DÙNG LUỒNG CAMERA EZVIZ THẬT TỪ SERVER UBUNTU
-    if (cam.id === 1) {
+    const src = (cam.cameraUrl || "").trim();
+
+    // A. NẾU CHỌN CAMERA EZVIZ HOẶC LINK RTSP: Đọc luồng từ Server
+    if (src === "EZVIZ_STREAM" || src.startsWith("rtsp://")) {
       cam.video.pause();
       cam.video.removeAttribute("src");
       cam.video.load();
@@ -1087,14 +1115,33 @@ function napVideoChoCacCamera() {
       return;
     }
 
-    // CÁC CHUỒNG CÒN LẠI (CAM 02...): Giữ nguyên video mô phỏng
+    // B. NẾU CHỌN "WEBCAM": Mở trực tiếp Camera của Laptop / Điện thoại
+    if (src.toUpperCase() === "WEBCAM" && navigator.mediaDevices?.getUserMedia) {
+      cam.video.classList.remove("hidden");
+      navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        .then((stream) => {
+          cam.video.srcObject = stream;
+          cam.video.play();
+          if (!cam.isFetching) {
+            cam.isFetching = true;
+            fetchYoloData(cam);
+          }
+        })
+        .catch((err) => console.error("Không mở được Webcam:", err));
+      return;
+    }
+
+    // C. CÁC TRƯỜNG HỢP CÒN LẠI: Phát link video (.mp4 / http stream) người dùng nhập
     cam.video.classList.remove("hidden");
-    cam.video.src = "video_lon.mp4";
+    cam.video.srcObject = null;
+    cam.video.src = src || "video_lon.mp4";
     cam.video.loop = true;
     cam.video.muted = true;
 
     cam.video.onloadeddata = () => {
-      cam.video.currentTime = (index * 3) % (cam.video.duration || 10);
+      if ((src || "video_lon.mp4") === "video_lon.mp4") {
+        cam.video.currentTime = (index * 3) % (cam.video.duration || 10);
+      }
       cam.video.play();
 
       if (!cam.isFetching) {
@@ -1105,20 +1152,26 @@ function napVideoChoCacCamera() {
   });
 }
 
-// 4. GIAO TIẾP VỚI YOLO (Cả CAM 1 và CAM 2 đều đi qua cổng /api/ai/detect của Nginx)
+// 4. GIAO TIẾP VỚI YOLO
 async function fetchYoloData(cam) {
   if (!isMultiAiRunning || !cam.canvas) {
     cam.isFetching = false;
     return;
   }
 
-  // --- TRƯỜNG HỢP 1: CHUỒNG 1 (CAM 01) LẤY HÌNH ẢNH TRỰC TIẾP TỪ CAMERA EZVIZ ---
-  if (cam.id === 1) {
+  const src = (cam.cameraUrl || "").trim();
+
+  // --- TRƯỜNG HỢP 1: LUỒNG EZVIZ HOẶC RTSP TỪ SERVER ---
+  if (src === "EZVIZ_STREAM" || src.startsWith("rtsp://")) {
     try {
       const response = await fetch("/api/ai/detect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image_base64: "EZVIZ_STREAM" }),
+        body: JSON.stringify({
+          barn_id: cam.id,
+          image_base64: "EZVIZ_STREAM",
+          camera_url: src,
+        }),
       });
 
       if (response.ok) {
@@ -1138,7 +1191,7 @@ async function fetchYoloData(cam) {
         }
       }
     } catch (error) {
-      console.error("Lỗi kết nối Camera EZVIZ:", error);
+      console.error("Lỗi kết nối Camera Stream:", error);
     }
 
     setTimeout(() => {
@@ -1147,7 +1200,7 @@ async function fetchYoloData(cam) {
     return;
   }
 
-  // --- TRƯỜNG HỢP 2: CÁC CHUỒNG KHÁC (CAM 02...) GỬI FRAME LÊN /api/ai/detect NHƯ CŨ ---
+  // --- TRƯỜNG HỢP 2: WEBCAM HOẶC LINK VIDEO TRÌNH DUYỆT ---
   if (!cam.video || cam.video.readyState < 2) {
     setTimeout(() => {
       requestAnimationFrame(() => fetchYoloData(cam));

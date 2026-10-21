@@ -195,31 +195,36 @@ async function xoaChuong(id) {
   }
 }
 
-// Hàm phụ trợ lưu/đọc nhanh link Camera trên trình duyệt
+// Đọc đúng link Camera của từng chuồng; nếu người dùng để trống ("NONE") thì trả về ""
 function layCameraUrlCuaChuong(chuong) {
   const localMap = JSON.parse(localStorage.getItem("vigga_camera_urls") || "{}");
-  return (
-    chuong.cameraUrl ||
-    chuong.CameraUrl ||
-    localMap[chuong.id] ||
-    localMap[chuong.prefix] ||
-    (chuong.id === 1 ? "EZVIZ_STREAM" : "video_lon.mp4")
-  );
+  const savedLocal = localMap[chuong.id] ?? localMap[chuong.prefix];
+  const dbUrl = chuong.cameraUrl ?? chuong.CameraUrl;
+
+  const finalVal = savedLocal !== undefined ? savedLocal : dbUrl;
+
+  if (finalVal === "NONE" || finalVal === "") return "";
+  if (finalVal) return finalVal;
+
+  // Chỉ gán mặc định khi chuồng đó chưa từng được cấu hình lần nào
+  return chuong.id === 1 ? "EZVIZ_STREAM" : "";
 }
 
 function luuCameraUrlLocal(key, url) {
   if (!key) return;
   const localMap = JSON.parse(localStorage.getItem("vigga_camera_urls") || "{}");
-  localMap[key] = url;
+  // Nếu người dùng xóa trắng ô nhập -> Lưu là "NONE" để biết là chuồng này không lắp Camera
+  localMap[key] = url && url.trim() !== "" ? url.trim() : "NONE";
   localStorage.setItem("vigga_camera_urls", JSON.stringify(localMap));
 }
 
-// 3. LƯU CHUỒNG (GỌI API POST HOẶC PUT REAL)
+// 3. LƯU CHUỒNG (Nếu để trống ô Camera sẽ lưu là "NONE" thay vì tự ép về video_lon.mp4)
 async function luuChuong(event) {
   event.preventDefault();
 
   const id = document.getElementById("chuongId").value;
-  const cameraUrlInput = (document.getElementById("chuongCameraUrl")?.value || "").trim() || "video_lon.mp4";
+  const rawCamInput = (document.getElementById("chuongCameraUrl")?.value || "").trim();
+  const cameraUrlToSave = rawCamInput !== "" ? rawCamInput : "NONE";
 
   const payload = {
     loai: document.getElementById("chuongLoai").value,
@@ -227,7 +232,7 @@ async function luuChuong(event) {
     lechNh3: parseFloat(document.getElementById("chuongLechNh3").value),
     nguongNong: parseFloat(document.getElementById("chuongNguongNong").value),
     nguongNh3: parseFloat(document.getElementById("chuongNguongNh3").value),
-    cameraUrl: cameraUrlInput,
+    cameraUrl: cameraUrlToSave,
   };
 
   try {
@@ -237,8 +242,8 @@ async function luuChuong(event) {
       payload.prefix = existingBarn ? existingBarn.prefix : `u${layUserIdHienTai()}_t${id}`;
       payload.userId = existingBarn?.userId ?? layUserIdHienTai();
 
-      luuCameraUrlLocal(id, cameraUrlInput);
-      luuCameraUrlLocal(payload.prefix, cameraUrlInput);
+      luuCameraUrlLocal(id, rawCamInput);
+      luuCameraUrlLocal(payload.prefix, rawCamInput);
 
       await fetch(`/api/barn/${id}`, {
         method: "PUT",
@@ -254,8 +259,7 @@ async function luuChuong(event) {
       payload.userId = uid;
       payload.prefix = `u${uid}_t` + Math.floor(Math.random() * 1000);
 
-      // Lưu theo cả prefix để dù Backend trả về id hay Id đều không bị mất link Camera
-      luuCameraUrlLocal(payload.prefix, cameraUrlInput);
+      luuCameraUrlLocal(payload.prefix, rawCamInput);
 
       const res = await fetch("/api/barn", {
         method: "POST",
@@ -266,7 +270,7 @@ async function luuChuong(event) {
         try {
           const created = await res.json();
           const newId = created?.id ?? created?.Id;
-          if (newId) luuCameraUrlLocal(newId, cameraUrlInput);
+          if (newId) luuCameraUrlLocal(newId, rawCamInput);
         } catch (e) {}
       }
       addSystemLog(
@@ -485,7 +489,7 @@ function moModalChuong(id = null) {
       '<i class="fa-solid fa-plus mr-2 text-emerald-600"></i>THÊM CHUỒNG MỚI';
     document.getElementById("formChuong").reset();
     document.getElementById("chuongId").value = "";
-    if (camInput) camInput.value = "video_lon.mp4";
+    if (camInput) camInput.value = "";
   }
 }
 
@@ -1144,6 +1148,29 @@ function napVideoChoCacCamera() {
     cam.canvas.height = 360;
 
     const src = (cam.cameraUrl || "").trim();
+
+    // NẾU NGƯỜI DÙNG ĐỂ TRỐNG LINK CAMERA -> Dừng phát và hiện thông báo "Chưa gắn Camera"
+    if (!src || src === "NONE") {
+      cam.video.pause();
+      cam.video.removeAttribute("src");
+      cam.video.load();
+      cam.video.classList.add("hidden");
+
+      cam.ctx.fillStyle = "#0f172a";
+      cam.ctx.fillRect(0, 0, cam.canvas.width, cam.canvas.height);
+      cam.ctx.fillStyle = "#64748b";
+      cam.ctx.font = "bold 16px Roboto, sans-serif";
+      cam.ctx.textAlign = "center";
+      cam.ctx.fillText("CHƯA KẾT NỐI NGUỒN CAMERA", cam.canvas.width / 2, cam.canvas.height / 2);
+      cam.ctx.textAlign = "start";
+
+      const statusEl = document.getElementById(`status-${cam.id}`);
+      if (statusEl) {
+        statusEl.innerText = "OFFLINE (Chưa gắn Camera)";
+        statusEl.className = "text-xs font-bold text-slate-400 mt-2";
+      }
+      return;
+    }
 
     // A. NẾU CHỌN CAMERA EZVIZ, RTSP HOẶC LINK .M3U8: Đọc luồng từ Server AI
     if (laLuongCameraServer(src)) {

@@ -195,16 +195,22 @@ async function xoaChuong(id) {
   }
 }
 
-// Hàm phụ trợ lưu/đọc nhanh link Camera trên trình duyệt (đảm bảo chạy ngay cả khi Backend C# chưa build lại)
+// Hàm phụ trợ lưu/đọc nhanh link Camera trên trình duyệt
 function layCameraUrlCuaChuong(chuong) {
   const localMap = JSON.parse(localStorage.getItem("vigga_camera_urls") || "{}");
-  return chuong.cameraUrl || chuong.CameraUrl || localMap[chuong.id] || (chuong.id === 1 ? "EZVIZ_STREAM" : "video_lon.mp4");
+  return (
+    chuong.cameraUrl ||
+    chuong.CameraUrl ||
+    localMap[chuong.id] ||
+    localMap[chuong.prefix] ||
+    (chuong.id === 1 ? "EZVIZ_STREAM" : "video_lon.mp4")
+  );
 }
 
-function luuCameraUrlLocal(id, url) {
-  if (!id) return;
+function luuCameraUrlLocal(key, url) {
+  if (!key) return;
   const localMap = JSON.parse(localStorage.getItem("vigga_camera_urls") || "{}");
-  localMap[id] = url;
+  localMap[key] = url;
   localStorage.setItem("vigga_camera_urls", JSON.stringify(localMap));
 }
 
@@ -213,7 +219,7 @@ async function luuChuong(event) {
   event.preventDefault();
 
   const id = document.getElementById("chuongId").value;
-  const cameraUrlInput = (document.getElementById("chuongCameraUrl")?.value || "").trim();
+  const cameraUrlInput = (document.getElementById("chuongCameraUrl")?.value || "").trim() || "video_lon.mp4";
 
   const payload = {
     loai: document.getElementById("chuongLoai").value,
@@ -228,10 +234,11 @@ async function luuChuong(event) {
     if (id) {
       const existingBarn = danhSachChuong.find((c) => c.id == id);
       payload.id = parseInt(id);
-      payload.prefix = existingBarn.prefix;
-      payload.userId = existingBarn.userId ?? layUserIdHienTai();
+      payload.prefix = existingBarn ? existingBarn.prefix : `u${layUserIdHienTai()}_t${id}`;
+      payload.userId = existingBarn?.userId ?? layUserIdHienTai();
 
       luuCameraUrlLocal(id, cameraUrlInput);
+      luuCameraUrlLocal(payload.prefix, cameraUrlInput);
 
       await fetch(`/api/barn/${id}`, {
         method: "PUT",
@@ -246,14 +253,21 @@ async function luuChuong(event) {
       const uid = layUserIdHienTai();
       payload.userId = uid;
       payload.prefix = `u${uid}_t` + Math.floor(Math.random() * 1000);
+
+      // Lưu theo cả prefix để dù Backend trả về id hay Id đều không bị mất link Camera
+      luuCameraUrlLocal(payload.prefix, cameraUrlInput);
+
       const res = await fetch("/api/barn", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       if (res.ok) {
-        const created = await res.json();
-        if (created && created.id) luuCameraUrlLocal(created.id, cameraUrlInput);
+        try {
+          const created = await res.json();
+          const newId = created?.id ?? created?.Id;
+          if (newId) luuCameraUrlLocal(newId, cameraUrlInput);
+        } catch (e) {}
       }
       addSystemLog(
         `HỆ THỐNG: Đã mở rộng quy mô, đấu nối thành công chuồng mới (${payload.loai}).`,
@@ -1013,12 +1027,42 @@ setInterval(async () => {
 
 // 5. Quản lý AI Camera
 let isMultiAiRunning = false;
-let aiCameras = []; // Mảng động chứa bao nhiêu camera cũng được
+let aiCameras = [];
+// Tạo 1 Canvas ẩn chuyên dùng để chụp frame gửi đi (không làm nháy hình trên giao diện)
+const offscreenCaptureCanvas = document.createElement("canvas");
+offscreenCaptureCanvas.width = 640;
+offscreenCaptureCanvas.height = 360;
+const offscreenCaptureCtx = offscreenCaptureCanvas.getContext("2d");
+
+// Kiểm tra xem nguồn Camera này có phải luồng xử lý trực tiếp từ Server (EZVIZ / RTSP / HLS .m3u8) không
+function laLuongCameraServer(src) {
+  const s = (src || "").trim();
+  return (
+    s === "EZVIZ_STREAM" ||
+    s.startsWith("rtsp://") ||
+    s.startsWith("EZVIZ:") ||
+    s.includes(".m3u8")
+  );
+}
+
+// Dọn dẹp các luồng Webcam & vòng lặp cũ trước khi vẽ lại lưới Camera
+function dungTatCaLuongCameraCu() {
+  aiCameras.forEach((cam) => {
+    cam.isDestroyed = true;
+    if (cam.video && cam.video.srcObject) {
+      cam.video.srcObject.getTracks().forEach((track) => track.stop());
+      cam.video.srcObject = null;
+    }
+  });
+}
 
 // 1. Hàm vẽ màn hình Camera dựa trên số lượng chuồng thực tế
 function renderAICameraGrid() {
   const grid = document.getElementById("multi-cam-grid");
   if (!grid) return;
+
+  // Tắt sạch các vòng lặp ngầm và Webcam cũ trước khi tạo lưới mới
+  dungTatCaLuongCameraCu();
 
   let html = "";
   aiCameras = [];
@@ -1033,11 +1077,11 @@ function renderAICameraGrid() {
               <span class="px-1.5 py-0.5 sm:px-2 sm:py-1 bg-rose-600 text-white text-[8px] sm:text-[9px] font-black rounded-none animate-pulse tracking-widest uppercase border border-rose-500">■ LIVE REC</span>
               <div class="flex items-center space-x-2 truncate ml-2">
                   <span class="text-emerald-400 text-[9px] sm:text-[10px] font-bold font-mono tracking-wider truncate">CAM_${maCam} / ${chuong.loai.toUpperCase()}</span>
-                  <button onclick="moModalChuong(${chuong.id})" class="text-slate-400 hover:text-white text-xs" title="Đổi nguồn Camera"><i class="fa-solid fa-gear"></i></button>
+                  <button onclick="moModalChuong(${chuong.id})" class="text-slate-400 hover:text-white text-xs px-1" title="Đổi nguồn Camera"><i class="fa-solid fa-gear"></i></button>
               </div>
           </div>
           <div class="relative bg-black aspect-video overflow-hidden border-b border-slate-200">
-              <video id="webcam-${chuong.id}" autoplay playsinline muted crossorigin="anonymous" class="w-full h-full object-cover opacity-90"></video>
+              <video id="webcam-${chuong.id}" autoplay playsinline muted class="w-full h-full object-cover opacity-90"></video>
               <canvas id="canvas-${chuong.id}" class="absolute top-0 left-0 w-full h-full object-cover pointer-events-none"></canvas>
           </div>
           <div class="p-2.5 sm:p-4 grid grid-cols-2 gap-2.5 sm:gap-4 bg-slate-50">
@@ -1059,8 +1103,8 @@ function renderAICameraGrid() {
       video: null,
       canvas: null,
       ctx: null,
-      tracker: [],
       isFetching: false,
+      isDestroyed: false,
       lastCount: 0,
     });
   });
@@ -1073,7 +1117,7 @@ function renderAICameraGrid() {
 }
 renderAICameraGrid();
 
-// 2. Khởi động AI hàng loạt (Đã xóa hàm bị trùng)
+// 2. Khởi động AI hàng loạt
 async function startMultiCamAI() {
   isMultiAiRunning = true;
 
@@ -1101,8 +1145,8 @@ function napVideoChoCacCamera() {
 
     const src = (cam.cameraUrl || "").trim();
 
-    // A. NẾU CHỌN CAMERA EZVIZ HOẶC LINK RTSP: Đọc luồng từ Server
-    if (src === "EZVIZ_STREAM" || src.startsWith("rtsp://")) {
+    // A. NẾU CHỌN CAMERA EZVIZ, RTSP HOẶC LINK .M3U8: Đọc luồng từ Server AI
+    if (laLuongCameraServer(src)) {
       cam.video.pause();
       cam.video.removeAttribute("src");
       cam.video.load();
@@ -1118,8 +1162,13 @@ function napVideoChoCacCamera() {
     // B. NẾU CHỌN "WEBCAM": Mở trực tiếp Camera của Laptop / Điện thoại
     if (src.toUpperCase() === "WEBCAM" && navigator.mediaDevices?.getUserMedia) {
       cam.video.classList.remove("hidden");
-      navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      navigator.mediaDevices
+        .getUserMedia({ video: { facingMode: "environment" }, audio: false })
         .then((stream) => {
+          if (cam.isDestroyed) {
+            stream.getTracks().forEach((t) => t.stop());
+            return;
+          }
           cam.video.srcObject = stream;
           cam.video.play();
           if (!cam.isFetching) {
@@ -1127,11 +1176,15 @@ function napVideoChoCacCamera() {
             fetchYoloData(cam);
           }
         })
-        .catch((err) => console.error("Không mở được Webcam:", err));
+        .catch((err) => {
+          console.error("Không mở được Webcam:", err);
+          const statusEl = document.getElementById(`status-${cam.id}`);
+          if (statusEl) statusEl.innerText = "Lỗi quyền truy cập Webcam!";
+        });
       return;
     }
 
-    // C. CÁC TRƯỜNG HỢP CÒN LẠI: Phát link video (.mp4 / http stream) người dùng nhập
+    // C. CÁC TRƯỜNG HỢP CÒN LẠI: Phát link video (.mp4 / http stream)
     cam.video.classList.remove("hidden");
     cam.video.srcObject = null;
     cam.video.src = src || "video_lon.mp4";
@@ -1139,6 +1192,7 @@ function napVideoChoCacCamera() {
     cam.video.muted = true;
 
     cam.video.onloadeddata = () => {
+      if (cam.isDestroyed) return;
       if ((src || "video_lon.mp4") === "video_lon.mp4") {
         cam.video.currentTime = (index * 3) % (cam.video.duration || 10);
       }
@@ -1152,17 +1206,22 @@ function napVideoChoCacCamera() {
   });
 }
 
-// 4. GIAO TIẾP VỚI YOLO
+// 4. GIAO TIẾP VỚI YOLO (Tự động ngắt khi đổi Camera & Không gây giật hình)
 async function fetchYoloData(cam) {
-  if (!isMultiAiRunning || !cam.canvas) {
+  if (
+    !isMultiAiRunning ||
+    cam.isDestroyed ||
+    !cam.canvas ||
+    !document.body.contains(cam.canvas)
+  ) {
     cam.isFetching = false;
     return;
   }
 
   const src = (cam.cameraUrl || "").trim();
 
-  // --- TRƯỜNG HỢP 1: LUỒNG EZVIZ HOẶC RTSP TỪ SERVER ---
-  if (src === "EZVIZ_STREAM" || src.startsWith("rtsp://")) {
+  // --- TRƯỜNG HỢP 1: LUỒNG EZVIZ / RTSP / .M3U8 TỪ SERVER ---
+  if (laLuongCameraServer(src)) {
     try {
       const response = await fetch("/api/ai/detect", {
         method: "POST",
@@ -1174,15 +1233,17 @@ async function fetchYoloData(cam) {
         }),
       });
 
-      if (response.ok) {
+      if (response.ok && !cam.isDestroyed) {
         const result = await response.json();
         if (result.status === "success" && result.frame_base64) {
           await new Promise((resolve) => {
             const img = new Image();
             img.onload = () => {
-              cam.ctx.clearRect(0, 0, cam.canvas.width, cam.canvas.height);
-              cam.ctx.drawImage(img, 0, 0, cam.canvas.width, cam.canvas.height);
-              xuLyHanhViVatNuoi(cam, result.data || []);
+              if (!cam.isDestroyed && cam.ctx) {
+                cam.ctx.clearRect(0, 0, cam.canvas.width, cam.canvas.height);
+                cam.ctx.drawImage(img, 0, 0, cam.canvas.width, cam.canvas.height);
+                xuLyHanhViVatNuoi(cam, result.data || [], result.count);
+              }
               resolve();
             };
             img.onerror = resolve;
@@ -1194,23 +1255,34 @@ async function fetchYoloData(cam) {
       console.error("Lỗi kết nối Camera Stream:", error);
     }
 
-    setTimeout(() => {
-      requestAnimationFrame(() => fetchYoloData(cam));
-    }, 200);
+    if (!cam.isDestroyed) {
+      setTimeout(() => {
+        requestAnimationFrame(() => fetchYoloData(cam));
+      }, 200);
+    }
     return;
   }
 
   // --- TRƯỜNG HỢP 2: WEBCAM HOẶC LINK VIDEO TRÌNH DUYỆT ---
   if (!cam.video || cam.video.readyState < 2) {
-    setTimeout(() => {
-      requestAnimationFrame(() => fetchYoloData(cam));
-    }, 200);
+    if (!cam.isDestroyed) {
+      setTimeout(() => {
+        requestAnimationFrame(() => fetchYoloData(cam));
+      }, 200);
+    }
     return;
   }
 
   try {
-    cam.ctx.drawImage(cam.video, 0, 0, cam.canvas.width, cam.canvas.height);
-    const frameBase64 = cam.canvas.toDataURL("image/jpeg", 0.7);
+    // Chụp hình qua offscreenCanvas để video gốc vẫn chạy mượt 60fps không bị đè ảnh tĩnh
+    offscreenCaptureCtx.drawImage(
+      cam.video,
+      0,
+      0,
+      offscreenCaptureCanvas.width,
+      offscreenCaptureCanvas.height
+    );
+    const frameBase64 = offscreenCaptureCanvas.toDataURL("image/jpeg", 0.7);
 
     const response = await fetch("/api/ai/detect", {
       method: "POST",
@@ -1221,29 +1293,35 @@ async function fetchYoloData(cam) {
       }),
     });
 
-    if (response.ok) {
+    if (response.ok && !cam.isDestroyed) {
       const result = await response.json();
       cam.ctx.clearRect(0, 0, cam.canvas.width, cam.canvas.height);
 
       if (result.status === "success") {
-        xuLyHanhViVatNuoi(cam, result.data);
+        xuLyHanhViVatNuoi(cam, result.data || [], result.count);
       }
     }
   } catch (error) {
     console.error("Lỗi kết nối AI YOLO:", error);
   }
 
-  setTimeout(() => {
-    requestAnimationFrame(() => fetchYoloData(cam));
-  }, 200);
+  if (!cam.isDestroyed) {
+    setTimeout(() => {
+      requestAnimationFrame(() => fetchYoloData(cam));
+    }, 200);
+  }
 }
 
 // 5. Xử lý kết quả đếm và đồng bộ lên KPI Tổng đàn
-function xuLyHanhViVatNuoi(cam, yoloData) {
-  let currentCount = yoloData.length;
-  cam.lastCount = currentCount; // Lưu lại số lượng của chuồng này
+function xuLyHanhViVatNuoi(cam, yoloData, serverCount = undefined) {
+  const safeList = Array.isArray(yoloData) ? yoloData : [];
+  let currentCount =
+    serverCount !== undefined && serverCount !== null
+      ? Number(serverCount)
+      : safeList.length;
+  cam.lastCount = currentCount;
 
-  yoloData.forEach((obj) => {
+  safeList.forEach((obj) => {
     if (obj.track_id === -1) return;
 
     cam.ctx.lineWidth = 3;
@@ -1254,13 +1332,11 @@ function xuLyHanhViVatNuoi(cam, yoloData) {
     cam.ctx.fillText(`ID: ${obj.track_id} (${obj.label})`, obj.x, obj.y - 5);
   });
 
-  // Cập nhật số lượng trên thẻ Camera của chuồng đó
   const countEl = document.getElementById(`count-${cam.id}`);
   if (countEl) {
     countEl.innerHTML = `${currentCount} <span class="text-xs text-slate-500 font-medium">cá thể</span>`;
   }
 
-  // Cập nhật trạng thái sức khỏe
   const statusEl = document.getElementById(`status-${cam.id}`);
   if (statusEl) {
     if (currentCount === 0) {
@@ -1272,8 +1348,10 @@ function xuLyHanhViVatNuoi(cam, yoloData) {
     }
   }
 
-  // TỰ ĐỘNG CỘNG DỒN TỔNG ĐÀN CỦA TẤT CẢ CÁC CHUỒNG ĐẨY LÊN KPI TRANG CHỦ
-  const tongDanToanTrai = aiCameras.reduce((sum, item) => sum + (item.lastCount || 0), 0);
+  const tongDanToanTrai = aiCameras.reduce(
+    (sum, item) => sum + (item.lastCount || 0),
+    0
+  );
   const kpiTongDan = document.getElementById("kpi-tong-dan");
   const kpiTongDanStatus = document.getElementById("kpi-tong-dan-status");
 
@@ -1281,7 +1359,8 @@ function xuLyHanhViVatNuoi(cam, yoloData) {
     kpiTongDan.innerText = `${tongDanToanTrai} cá thể`;
   }
   if (kpiTongDanStatus) {
-    kpiTongDanStatus.className = "text-[10px] text-material-teal font-bold mt-2 flex items-center";
+    kpiTongDanStatus.className =
+      "text-[10px] text-material-teal font-bold mt-2 flex items-center";
     kpiTongDanStatus.innerHTML = `<i class="fa-solid fa-video mr-1.5"></i> Đang đếm trực tiếp từ ${aiCameras.length} Camera AI`;
   }
 }

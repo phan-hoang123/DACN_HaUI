@@ -351,6 +351,44 @@ if (providerName === "Google") {
             }, 600);
         }
     </script>
+
+    <script>
+    // 1. TỰ ĐỘNG VÀO THẲNG QUANLY.HTML NẾU ĐIỆN THOẠI ĐÃ ĐĂNG NHẬP TRƯỚC ĐÓ
+    (function tuDongDangNhapNeuDaLuu() {
+        try {
+            const savedUser = localStorage.getItem("currentUser");
+            if (savedUser) {
+                const parsed = JSON.parse(savedUser);
+                const userObj = parsed.data || parsed;
+                if (userObj && (userObj.username || userObj.id)) {
+                    // Đã có tài khoản trên máy -> Chuyển thẳng vào trang Quản lý, không bắt đăng nhập lại
+                    window.location.replace("QuanLy.html");
+                    return;
+                }
+            }
+        } catch (e) {}
+    })();
+
+    // 2. TỰ ĐỘNG CHUYỂN TỪ TRÌNH DUYỆT ẢO (ZALO / MESSENGER / FB) SANG CHROME / SAFARI CHÍNH CỦA MÁY
+    (function thoatTrinhDuyetAoZaloMessenger() {
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+        const isInAppBrowser = /FBAN|FBAV|Zalo|Line|Instagram|Messenger/i.test(ua);
+
+        if (isInAppBrowser) {
+            const currentUrl = window.location.href.replace(/^https?:\/\//i, "");
+            // Nếu là điện thoại Android -> Tự động gọi mở thẳng bằng trình duyệt Chrome của máy (nơi có sẵn Gmail)
+            if (/Android/i.test(ua)) {
+                window.location.href = `intent://${currentUrl}#Intent;scheme=https;package=com.android.chrome;end`;
+            } else {
+                // Nếu là iPhone (iOS không cho tự nhảy sang Safari) -> Hiện thanh nhắc mở bằng Safari
+                const banner = document.createElement("div");
+                banner.className = "fixed top-0 inset-x-0 z-[999] bg-amber-500 text-white text-xs font-bold p-3 text-center shadow-lg";
+                banner.innerHTML = '⚠️ Bạn đang mở link trong Zalo/Messenger. Hãy bấm biểu tượng <b>"..."</b> ở góc trên và chọn <b>"Mở bằng trình duyệt / Safari"</b> để dùng luôn Gmail có sẵn trên máy không cần mật khẩu!';
+                document.body.prepend(banner);
+            }
+        }
+    })();
+</script>
 </body>
 
 </html>
